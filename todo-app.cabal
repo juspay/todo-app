@@ -1,0 +1,49 @@
+cabal-version:      3.0
+name:               todo-app
+version:            0.1
+synopsis:           TODO app using PostgREST web server
+
+license:            MIT
+copyright:          Copyright (c) 2023 Juspay
+author:             Shivaraj B H
+category:           Introduction
+homepage:           https://github.com/juspay/todo-app
+bug-reports:        https://github.com/juspay/todo-app/issues
+tested-with:        GHC ==9.2.6 || ==9.2.7
+
+source-repository head
+  type:     git
+  location: https://github.com/juspay/todo-app
+
+extra-source-files:
+  LICENSE
+  README.md
+
+executable todo-app
+  other-modules:      TodoApp.Request
+  main-is:            Main.hs
+  default-extensions:
+    BlockArguments
+    DataKinds
+    DeriveAnyClass
+    DeriveGeneric
+    DerivingStrategies
+    KindSignatures
+    OverloadedStrings
+    OverloadedStrings
+    ScopedTypeVariables
+
+  build-depends:
+    , aeson
+    , base
+    , boxes
+    , bytestring
+    , http-client
+    , modern-uri
+    , optparse-applicative
+    , req
+    , text
+    , vector
+
+  hs-source-dirs:     src
+  default-language:   Haskell2010
