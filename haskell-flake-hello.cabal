@@ -1,0 +1,42 @@
+cabal-version:      3.0
+name:               haskell-flake-hello
+version:            0.1
+synopsis:
+   TODO app using req (http-client library)
+description:
+   This TODO app is implemented using req to make http requests to postgrest,
+   which is a webserver that converts your PostgreSQL database into a RESTful API.
+   This approach has been taken to simplify the Haskell implementation and to
+   demonstrate how dependendent services (in this case, postgrest is dependendent
+   on PostgreSQl) can be started in nix using process-compose-flake
+   (https://github.com/Platonic-Systems/process-compose-flake).
+license:            MIT
+copyright:          Copyright (c) 2023 Juspay
+maintainer:         shivaraj.bh@juspay.in
+author:             Shivaraj B H
+category:           Introduction
+homepage:           https://github.com/juspay/haskell-flake-hello
+bug-reports:        https://github.com/juspay/haskell-flake-hello/issues
+
+source-repository head
+  type:     git
+  location: https://github.com/juspay/haskell-flake-hello
+
+extra-source-files:
+  LICENSE
+  README.md
+
+executable haskell-flake-hello
+  other-modules: Request
+  main-is: Main.hs
+  
+  build-depends:
+    , aeson
+    , text
+    , base
+    , req
+    , relude
+    , modern-uri
+
+  hs-source-dirs:     src
+  default-language:   Haskell2010
