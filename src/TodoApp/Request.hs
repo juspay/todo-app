@@ -3,7 +3,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE DataKinds #-}
 
-module Request (done, view, add, delete, reset) where
+module TodoApp.Request (done, view, add, delete, reset) where
 -- TODO: maybe use qualified import?
 import Network.HTTP.Req
     ( responseStatusCode,
