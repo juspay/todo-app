@@ -27,7 +27,7 @@ extra-source-files:
   README.md
 
 executable haskell-flake-hello
-  other-modules: Request
+  other-modules: TodoApp.Request
   main-is: Main.hs
   
   build-depends:

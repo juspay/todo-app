@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main (main) where
 
-import Request ()
+import TodoApp.Request ()
 
 main :: IO ()
 main = print "Hello World!"
