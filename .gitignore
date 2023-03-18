@@ -10,3 +10,11 @@ result-*
 
 # direnv
 .direnv
+
+# postgres
+.nix
+.s.PGSQL.5432.lock
+logfile
+
+# postgrest
+tutorial.conf
