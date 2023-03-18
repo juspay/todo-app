@@ -33,8 +33,9 @@ executable haskell-flake-hello
   build-depends:
     , aeson
     , base
+    , bytestring
+    , http-client
     , modern-uri
-    , relude
     , req
     , text
 
