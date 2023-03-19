@@ -33,11 +33,14 @@ executable haskell-flake-hello
   build-depends:
     , aeson
     , base
+    , boxes
     , bytestring
     , http-client
     , modern-uri
     , req
     , text
+    , with-utf8
+    , vector
 
   hs-source-dirs:   src
   default-language: Haskell2010
