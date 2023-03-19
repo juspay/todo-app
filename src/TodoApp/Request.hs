@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 
-module TodoApp.Request (done, view, add, delete, reset) where
+module TodoApp.Request (done, view, add, delete, reset, viewPending) where
 
 import Control.Monad.IO.Class (MonadIO)
 import Data.Aeson (object, (.=))
@@ -51,15 +51,20 @@ request body method subdir filter (domain, todoPort) =
 done :: Int -> (String, Int) -> IO ()
 done id host = do
   let payload =
-        object ["done" .= ("false" :: String)]
+        object ["done" .= ("true" :: String)]
   res <- request (R.ReqBodyJson payload) R.PATCH "/todos" (concat ["id=eq.", pack $ show id]) host
   print $ responseCode res
 
--- TODO: add another function that only displays pending tasks
--- |Display all the items in the table
+-- |Return all the items in the table
 view :: (String, Int) -> IO ()
 view host = do
   res <- request R.NoReqBody R.GET "/todos" "" host
+  print $ message res
+
+-- |Return pending items in the table
+viewPending :: (String, Int) -> IO ()
+viewPending host = do
+  res <- request R.NoReqBody R.GET "/todos" "done=is.false" host
   print $ message res
 
 -- |Add a new task to the table
