@@ -1,33 +1,23 @@
-# haskell-template
+# WIP: todo-app
 
-Get a Haskell development environment up and running quickly. Thanks to Nix, this template is optimized for a fully reproducible and friendly development environment. It is based on:
+A simple TODO app in Haskell that provides a persistent way to manage TODO list, by making http requests to postgrest. Postgrest is a webserver that converts your PostgreSQL database into a RESTful API.
+This app serves as a hello-world to ulitmately demonstrate how a Haskell project can benefit with the use of Nix.
 
-- [Nix](https://srid.ca/haskell-nix) + [Flakes](https://serokell.io/blog/practical-nix-flakes) (via [`github:srid/haskell-flake`](https://github.com/srid/haskell-flake)) + GHC 9.2
-- VSCode + [HLS](https://github.com/haskell/haskell-language-server)
-- [fourmolu](https://github.com/fourmolu/fourmolu) autoformatting 
-- [Relude](https://github.com/kowainik/relude#relude) as Prelude.
-  - `.hlint.yaml` is [from relude](https://github.com/kowainik/relude/blob/main/.hlint.yaml)
-- Devshell scripts (`,` prefixed) are provided via [mission-control](https://github.com/Platonic-Systems/mission-control)
+## Prerequisite
 
-If you have an *existing* Haskell project, you should probably use https://github.com/srid/haskell-flake instead.
+- Postgres server
+- Postgrest (https://postgrest.org/en/stable/install.html)
+- Run `./db.sh` to create `data/db.conf` and load the db dump from `db.sql`.
+- Run `postgrest data/db.conf` to start the webserver.
+- `cabal-install` to build the project. 
 
 ## Getting Started
 
-*tldr: Install Nix, enable Flakes, open in VSCode and run `, run`.*
+- Run `cabal install --overwrite-policy="always"` that symlinks `todo-app` executable to your `$HOME/.cabal/bin`
+- Run `todo-app view` to see the current list of pending tasks.
+- Run `todo-app viewAll` to see the list of completed and pending tasks.
+- Run `todo-app add "do something"` to add an item to your list.
+- Run `todo-app done 1` to mark the first item as completed.
+- Run `todo-app delete 1` to delete the first item from the list.
+- Run `todo-app reset` to remove all the items from the list.
 
-For details, see: https://srid.ca/haskell-template/start
-
-## Tips
-
-- Run `nix flake update` to update all flake inputs.
-- Run `nix build .#check -L` to run the flake checks.
-- Run `, fmt` in nix shell to autoformat the project. This uses [treefmt](https://github.com/numtide/treefmt).
-- Run `, docs` to start Hoogle with packages in your cabal file.
-- Run the application without installing: `nix run github:srid/haskell-template` (or `nix run .` from checkout)
-- Common workflows
-  - Adding library dependencies in Nix: https://haskell.flake.page/dependency
-  - Adding tests: https://srid.ca/haskell-template/tests
-
-## Discussions
-
-Questions? Ideas? Suggestions? You may post them here: https://github.com/srid/haskell-template/discussions

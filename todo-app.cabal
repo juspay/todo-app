@@ -1,0 +1,59 @@
+cabal-version:      3.0
+name:               todo-app
+version:            0.1
+synopsis:           TODO app using req (http-client library)
+description:
+  This TODO app provides a persistent way to manage TODO list, by making http
+  requests to postgrest. Postgrest is a webserver that converts your PostgreSQL
+  database into a RESTful API.
+  This app serves as a hello-world to demonstrate how a Haskell project can use
+  Nix. During this journey, we will also discuss the problems with traditional
+  way of building and deploying a Haskell project and show how Nix can be used
+  to solve this problem in a unified manner.
+
+license:            MIT
+copyright:          Copyright (c) 2023 Juspay
+maintainer:         shivaraj.bh@juspay.in
+author:             Shivaraj B H
+category:           Introduction
+homepage:           https://github.com/juspay/todo-app
+bug-reports:        https://github.com/juspay/todo-app/issues
+tested-with:        GHC ==9.2.6 || ==9.2.7
+
+source-repository head
+  type:     git
+  location: https://github.com/juspay/todo-app
+
+extra-source-files:
+  LICENSE
+  README.md
+
+executable todo-app
+  other-modules:      TodoApp.Request
+  main-is:            Main.hs
+  default-extensions:
+    BlockArguments
+    DataKinds
+    DeriveAnyClass
+    DeriveGeneric
+    DerivingStrategies
+    KindSignatures
+    OverloadedStrings
+    OverloadedStrings
+    ScopedTypeVariables
+
+  build-depends:
+    , aeson
+    , base
+    , boxes
+    , bytestring
+    , http-client
+    , modern-uri
+    , optparse-applicative
+    , req
+    , text
+    , vector
+    , with-utf8
+
+  hs-source-dirs:     src
+  default-language:   Haskell2010
