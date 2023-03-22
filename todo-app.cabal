@@ -4,7 +4,7 @@ version:            0.1
 synopsis:           TODO app using req (http-client library)
 description:
   This TODO app provides a persistent way to manage TODO list, by making http
-  requests to postgrest,which is a webserver that converts your PostgreSQL
+  requests to postgrest. Postgrest is a webserver that converts your PostgreSQL
   database into a RESTful API.
   This app serves as a hello-world to demonstrate how a Haskell project can use
   Nix. During this journey, we will also discuss the problems with traditional
