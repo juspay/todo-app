@@ -1,6 +1,6 @@
 # WIP: todo-app
 
-A simple TODO app in Haskell that provides a persistent way to manage TODO list, by making http requests to postgrest. Postgrest is a webserver that converts your PostgreSQL database into a RESTful API.
+A simple TODO app in Haskell that provides a persistent way to manage TODO list, by making http requests to postgrest (postgrest is a webserver that converts your PostgreSQL database into a RESTful API).\
 This app serves as a hello-world to ulitmately demonstrate how a Haskell project can benefit with the use of Nix.
 
 ## Prerequisite
