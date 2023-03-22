@@ -3,12 +3,13 @@ name:               todo-app
 version:            0.1
 synopsis:           TODO app using req (http-client library)
 description:
-  This TODO app is implemented using req to make http requests to postgrest,
-  which is a webserver that converts your PostgreSQL database into a RESTful API.
-  This approach has been taken to simplify the Haskell implementation and to
-  demonstrate how dependendent services (in this case, postgrest is dependendent
-  on PostgreSQl) can be started in nix using process-compose-flake
-  (https://github.com/Platonic-Systems/process-compose-flake).
+  This TODO app provides a persistent way to manage TODO list, by making http
+  requests to postgrest,which is a webserver that converts your PostgreSQL
+  database into a RESTful API.
+  This app serves as a hello-world to demonstrate how a Haskell project can use
+  Nix. During this journey, we will also discuss the problems with traditional
+  way of building and deploying a Haskell project and show how Nix can be used
+  to solve this problem in a unified manner.
 
 license:            MIT
 copyright:          Copyright (c) 2023 Juspay
