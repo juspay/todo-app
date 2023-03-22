@@ -1,13 +1,15 @@
-# todo-app
+# WIP: todo-app
 
-Refer to [todo-app.cabal](todo-app.cabal) for description.
+A simple TODO app in Haskell that provides a persistent way to manage TODO list, by making http requests to postgrest. Postgrest is a webserver that converts your PostgreSQL database into a RESTful API.
+This app serves as a hello-world to ulitmately demonstrate how a Haskell project can benefit with the use of Nix.
 
 ## Prerequisite
 
-- Postgres server (Tested with v12 & 14)
-- Postgrest (https://postgrest.org/en/stable/install.html) (Tested with v10)
-- Run `./db.sh` to create `tutorial.conf` and load the db dump from `db.sql`.
-- `cabal-install` to build the project. (Tested with 
+- Postgres server
+- Postgrest (https://postgrest.org/en/stable/install.html)
+- Run `./db.sh` to create `data/db.conf` and load the db dump from `db.sql`.
+- Run `postgrest data/db.conf` to start the webserver.
+- `cabal-install` to build the project. 
 
 ## Getting Started
 

@@ -5,4 +5,4 @@ cabal.project.local
 cabal.project.local~
 
 # postgrest
-tutorial.conf
+data

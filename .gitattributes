@@ -1,7 +1,0 @@
-flake.lock linguist-generated=true
-# To maintain consistency of line endings across OSs
-*.md       eol=lf
-*.hs       eol=lf
-*.yaml     eol=lf
-*.json     eol=lf
-*.cabal    eol=lf 
