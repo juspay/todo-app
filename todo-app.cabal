@@ -1,5 +1,5 @@
 cabal-version:      3.0
-name:               haskell-flake-hello
+name:               todo-app
 version:            0.1
 synopsis:           TODO app using req (http-client library)
 description:
@@ -15,19 +15,19 @@ copyright:          Copyright (c) 2023 Juspay
 maintainer:         shivaraj.bh@juspay.in
 author:             Shivaraj B H
 category:           Introduction
-homepage:           https://github.com/juspay/haskell-flake-hello
-bug-reports:        https://github.com/juspay/haskell-flake-hello/issues
+homepage:           https://github.com/juspay/todo-app
+bug-reports:        https://github.com/juspay/todo-app/issues
 tested-with:        GHC ==9.2.6 || ==9.2.7
 
 source-repository head
   type:     git
-  location: https://github.com/juspay/haskell-flake-hello
+  location: https://github.com/juspay/todo-app
 
 extra-source-files:
   LICENSE
   README.md
 
-executable haskell-flake-hello
+executable todo-app
   other-modules:      TodoApp.Request
   main-is:            Main.hs
   default-extensions:

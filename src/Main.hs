@@ -85,20 +85,20 @@ main = do
     deleteCommand =
       command
         "delete"
-        (info addOptions (progDesc "Delete a task"))
+        (info deleteOptions (progDesc "Delete a task"))
     deleteOptions :: Parser Command
     deleteOptions =
       Delete
-        <$> option auto (metavar "Task ID" <> help "ID of the task to delete from TODO")
+        <$> argument auto (metavar "Task_ID" <> help "ID of the task to delete from TODO")
     doneCommand :: Mod CommandFields Command
     doneCommand =
       command
         "done"
-        (info addOptions (progDesc "Mark a task as complete"))
+        (info doneOptions (progDesc "Mark a task as complete"))
     doneOptions :: Parser Command
     doneOptions =
       Done
-        <$> option auto (metavar "Task ID" <> help "ID of the task to mark as complete")
+        <$> argument auto (metavar "Task_ID" <> help "ID of the task to mark as complete")
     viewCommand :: Mod CommandFields Command
     viewCommand =
       command

@@ -1,2 +1,3 @@
+# Auto-detects cabal files in the project
 cradle:
   cabal:

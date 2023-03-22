@@ -1,20 +1,21 @@
-# haskell-flake-hello
+# todo-app
 
-Refer to [haskell-flake-hello.cabal](haskell-flake-hello.cabal) for description.
+Refer to [todo-app.cabal](todo-app.cabal) for description.
 
 ## Prerequisite
 
-- Install Nix<sup>[(*)](https://determinate.systems/posts/determinate-nix-installer)</sup>, enable Flakes (avoid using global installations)
-
-TODO: Add instructions to run postgres in the local directory
-TODO: Add instructions to start postgrest along with creating the schema.
+- Postgres server (Tested with v12 & 14)
+- Postgrest (https://postgrest.org/en/stable/install.html) (Tested with v10)
+- Run `./db.sh` to create `tutorial.conf` and load the db dump from `db.sql`.
+- `cabal-install` to build the project. (Tested with 
 
 ## Getting Started
 
-TODO: Write about how to use the app
-
-## Tips
-
-- Run `nix run nixpkgs#ormolu -- --mode inplace $(git ls-files '*.hs')` to format all the `.hs` files in your worktree.
-- Run `nix run nixpkgs#haskellPackages.cabal-fmt -- --inplace haskell-flake-hello.cabal` to format the `.cabal` file.
+- Run `cabal install --overwrite-policy="always"` that symlinks `todo-app` executable to your `$HOME/.cabal/bin`
+- Run `todo-app view` to see the current list of pending tasks.
+- Run `todo-app viewAll` to see the list of completed and pending tasks.
+- Run `todo-app add "do something"` to add an item to your list.
+- Run `todo-app done 1` to mark the first item as completed.
+- Run `todo-app delete 1` to delete the first item from the list.
+- Run `todo-app reset` to remove all the items from the list.
 
