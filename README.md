@@ -22,3 +22,8 @@ A simple TODO app in Haskell that provides a persistent way to manage TODO list,
 - Run `todo-app delete 1` to delete the first item from the list.
 - Run `todo-app reset` to remove all the items from the list.
 
+## TODO
+
+- [ ] Build the project executable using flake
+- [ ] Start postgres server using flakes
+- [ ] Start postgrest service using flakes
