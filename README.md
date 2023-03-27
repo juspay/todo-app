@@ -27,3 +27,4 @@ A simple TODO app in Haskell that provides a persistent way to manage TODO list,
 - [ ] Build the project executable using flake
 - [ ] Start postgres server using flakes
 - [ ] Start postgrest service using flakes
+
