@@ -4,7 +4,6 @@ import Data.Aeson (Result (..))
 import Data.Maybe (fromMaybe)
 import Data.Semigroup ((<>))
 import qualified Data.Text as DT
-import qualified Main.Utf8 as Utf8
 import Options.Applicative hiding (Success)
 import System.Environment (lookupEnv)
 import Text.PrettyPrint.Boxes hiding ((<>))
@@ -39,16 +38,16 @@ main = do
       parseStatus status "Task completed!"
     View -> do
       todo <- TR.view (domain, todoPort)
-      printWithUtf8 todo
+      printTasks todo
     ViewAll -> do
       todo <- TR.viewAll (domain, todoPort)
-      printWithUtf8 todo
+      printTasks todo
     Reset -> do
       status <- TR.reset (domain, todoPort)
       parseStatus status "Tasks cleared!"
   where
-    printWithUtf8 :: Result [Task] -> IO ()
-    printWithUtf8 res = do
+    printTasks :: Result [Task] -> IO ()
+    printTasks res = do
       case res of
         Success a -> mapM_ printTask a
         Error b -> putStrLn b
@@ -120,9 +119,9 @@ main = do
     width :: Int
     width = 50
 
-    getCheckBox :: Bool -> String
-    getCheckBox True = "✗ "
-    getCheckBox False = "✓ "
+    getStatusIcon :: Bool -> String -> String
+    getStatusIcon True _  = "[x] "
+    getStatusIcon False id = "[" ++ id ++ "] "
 
     printTask :: TR.Task -> IO ()
     printTask v = do
@@ -131,7 +130,7 @@ main = do
         ( moveRight
             2
             -- Prints `✓ <id>`
-            (text (getCheckBox (TR.done v) ++ show (TR.id v)))
+            (text (getStatusIcon (TR.done v) $ show (TR.id v)))
             <+>
             -- Prints task in a box whose width is `width` and
             -- height depends on the length of the taks message
