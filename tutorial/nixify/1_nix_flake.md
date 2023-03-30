@@ -14,8 +14,10 @@ Let's answer this by trying to setup the pre-requisites for todo-app. The steps 
 - Run the script `db.sh` to load the DB dump
 - Install PostgREST and start the web server
 - Install `cabal-install`, `ghc`
-- Build the project using `cabal`
+- Build the project using `cabal`\
+\
 The steps mentioned above are brief, refer to the [README](https://github.com/juspay/todo-app/blob/tutorial/part-0/README.md) for details.\
+\
 These are some of the problems with the steps mentioned above:
 - Postgres and PostgREST are installed globally: This will create problems when you want to work on multiple different versions of these dependencies.
 - If the project doesn't specify the versions of the dependencies used, then you might end up in what's called a "Dependency hell".
@@ -24,7 +26,7 @@ These are some of the problems with the steps mentioned above:
 How is Nix going to solve the above issues?
 - Postgres server will run using the data directory in the current project directory.
 - Both Postgres and PostgREST are only present in the Nix shell and since they are installed in Read-only filesystem `/nix`, having multiple different versions will not cause any issues as there is no chance of any rewrites by mistake.
-- The `flake.lock` file will contain the locked content hash, revision and source of "inputs" which will ensure the same source is used on further builds.
+- The `flake.lock` file will contain the locked content hash, revision and source of "inputs" which will ensure the same source is used on further builds.\
 \
 All these benefits are listed as per the Nixification that will be happening in this blog. More benefits will be depmonstrated in upcoming blogs.
 ## Introduce Flake
