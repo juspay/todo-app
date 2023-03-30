@@ -6,15 +6,14 @@ A simple TODO app in Haskell that provides a persistent way to manage TODO list,
 
 ## Prerequisite
 
-- Postgres server
-- Postgrest (https://postgrest.org/en/stable/install.html)
-- Run `./db.sh` to create `data/db.conf` and load the db dump from `db.sql`.
-- Run `postgrest data/db.conf` to start the webserver.
-- `cabal-install` to build the project. 
+- Install Nix<sup>[(*)](https://determinate.systems/posts/determinate-nix-installer)</sup>, enable Flakes (avoid using global installations)
+- Stop any global postgres server on port 5432.
+- Run `nix run .#postgres` to start a postgres server in `./data/db` dir.
+- Run `nix run .#postgrest` to start postgREST webserver.
 
 ## Getting Started
 
-- Run `cabal install --overwrite-policy="always"` that symlinks `todo-app` executable to your `$HOME/.cabal/bin`
+- Run `nix develop` to enter nix shell.
 - Run `todo-app view` to see the current list of pending tasks.
 - Run `todo-app viewAll` to see the list of completed and pending tasks.
 - Run `todo-app add "do something"` to add an item to your list.
@@ -22,10 +21,14 @@ A simple TODO app in Haskell that provides a persistent way to manage TODO list,
 - Run `todo-app delete 1` to delete the first item from the list.
 - Run `todo-app reset` to remove all the items from the list.
 
+## Tips
+
+- Run `nix run .#postgres_stop` to stop the postgres server
+
 ## TODO
 
 - [x] Build the project executable using flake
 - [x] Add devShell support
-- [ ] Start postgres server using flakes
-- [ ] Start postgrest service using flakes
+- [x] Start postgres server using flakes
+- [x] Start postgrest service using flakes
 

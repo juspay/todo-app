@@ -46,8 +46,65 @@
           # added to PATH env of the devShell
           buildInputs = with haskellPackages'.${system}; [
             cabal-install
+            todo-app
           ];
         };
       });
+    # Define apps that is triggered by `nix run` command. For example,
+    # `nix run .#postgres` will run the script for postgres below
+    apps = forAllSystems ( system: {
+      postgres =
+      let
+        pgsql = pkgs.${system}.postgresql;
+      in
+      {
+        # `type` and `program` are required attributes.
+        #  TODO: include explanation of `type`
+        # `program` denotes the path of the executable to run
+        type = "app";
+        program = toString ( 
+          pkgs.${system}.writeShellScript "pg" ''
+            
+            # Initialize a database with data stored in current project dir
+            ${pgsql}/bin/initdb --no-locale -D ./data/db
+
+            # Start your postgres server
+            ${pgsql}/bin/pg_ctl -D ./data/db -l ./data/logfile -o "--unix_socket_directories='$PWD/data'" start
+
+            # Create a database of your current user
+            ${pgsql}/bin/createdb -h $PWD/data $(whoami)
+            
+            ${pkgs.${system}.coreutils}/bin/mkdir data 
+
+            # Create configuration file for postgrest
+            ${pkgs.${system}.coreutils}/bin/echo "db-uri = \"postgres://authenticator:mysecretpassword@localhost:5432/$(whoami)\"
+            db-schemas = \"api\"
+            db-anon-role = \"todo_user\"" > data/db.conf
+
+            # Load DB dump
+            ${pgsql}/bin/psql -h $PWD/data < db.sql
+          ''
+          );
+      };
+      postgres_stop = {
+        type = "app";
+        program = toString (
+          pkgs.${system}.writeShellScript "pgStop" ''
+            # Stop postgres server
+            ${pkgs.${system}.postgresql}/bin/pg_ctl -D ./data/db stop
+          ''
+        );
+      };
+      
+      postgrest = {
+        type = "app";
+        program = toString (
+          pkgs.${system}.writeShellScript "pgREST" ''
+            # Run postgrest using the configuration
+            ${nixpkgs.lib.getExe haskellPackages'.${system}.postgrest} -- ./data/db.conf
+          ''
+        );
+      };
+    });
     };
 }
