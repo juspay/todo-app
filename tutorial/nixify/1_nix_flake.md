@@ -250,4 +250,4 @@ Talk about `type` and the output of `nix run .#hello`
 
 - Installing postgres, setting up server and loading db dump replaced with -> `nix run .#postgres`
 - Installing postgREST webserver, running it replaced with -> `nix run .#postgrest`
-- Installing cabal-install, building the project replaced with -> `nix develop` and `nix build`
+- Installing cabal-install, building the project replaced with -> `nix develop`, `nix build` and `nix run`

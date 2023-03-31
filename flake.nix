@@ -54,56 +54,83 @@
     # `nix run .#postgres` will run the script for postgres below
     apps = forAllSystems ( system: {
       postgres =
-      let
-        pgsql = pkgs.${system}.postgresql;
-      in
       {
         # `type` and `program` are required attributes.
         #  TODO: include explanation of `type`
         # `program` denotes the path of the executable to run
         type = "app";
-        program = toString ( 
-          pkgs.${system}.writeShellScript "pg" ''
-            
-            # Initialize a database with data stored in current project dir
-            ${pgsql}/bin/initdb --no-locale -D ./data/db
+        program = 
+          toString 
+            (pkgs.${system}.writeShellApplication {
+              name = "pg";
+              runtimeInputs = with pkgs.${system}; 
+                [ 
+                  postgresql
+                  coreutils
+                ];
+              text = 
+              ''
+                # TODO: Echo that a different process is running on port 5432 for a clearer error message
+                # Initialize a database with data stored in current project dir
+                [ ! -d "./data/db" ] && initdb --no-locale -D ./data/db
 
-            # Start your postgres server
-            ${pgsql}/bin/pg_ctl -D ./data/db -l ./data/logfile -o "--unix_socket_directories='$PWD/data'" start
+                # Start your postgres server
+                if ! pg_ctl -D ./data/db status; then
+                  pg_ctl -D ./data/db -l ./data/logfile -o "--unix_socket_directories='$PWD/data'" start
+                fi
+                # Create a database of your current user
+                if ! psql -h "$PWD"/data -lqt | cut -d \| -f 1 | grep -qw "$(whoami)"; then
+                  createdb -h "$PWD"/data "$(whoami)"
+                fi
+                
+                [ ! -d "data" ] && mkdir data 
 
-            # Create a database of your current user
-            ${pgsql}/bin/createdb -h $PWD/data $(whoami)
-            
-            ${pkgs.${system}.coreutils}/bin/mkdir data 
+                # Create configuration file for postgrest
+                echo "db-uri = \"postgres://authenticator:mysecretpassword@localhost:5432/$(whoami)\"
+                db-schemas = \"api\"
+                db-anon-role = \"todo_user\"" > data/db.conf
 
-            # Create configuration file for postgrest
-            ${pkgs.${system}.coreutils}/bin/echo "db-uri = \"postgres://authenticator:mysecretpassword@localhost:5432/$(whoami)\"
-            db-schemas = \"api\"
-            db-anon-role = \"todo_user\"" > data/db.conf
-
-            # Load DB dump
-            ${pgsql}/bin/psql -h $PWD/data < db.sql
-          ''
-          );
+                # Load DB dump
+                # TODO: check if schema already exists
+                psql -h "$PWD"/data < db.sql
+              '';
+            }) + "/bin/pg";
       };
       postgres_stop = {
         type = "app";
-        program = toString (
-          pkgs.${system}.writeShellScript "pgStop" ''
-            # Stop postgres server
-            ${pkgs.${system}.postgresql}/bin/pg_ctl -D ./data/db stop
-          ''
-        );
+        program = 
+          toString 
+            (pkgs.${system}.writeShellApplication {
+              name = "pgStop";
+              runtimeInputs = with pkgs.${system}; 
+                [ 
+                  postgresql
+                ];
+              text = 
+              ''
+                [ -d "./data/db" ] && if pg_ctl -D ./data/db status; then
+                  pg_ctl -D ./data/db stop
+                fi
+              '';
+            }) + "/bin/pgStop";
       };
       
       postgrest = {
         type = "app";
-        program = toString (
-          pkgs.${system}.writeShellScript "pgREST" ''
-            # Run postgrest using the configuration
-            ${nixpkgs.lib.getExe haskellPackages'.${system}.postgrest} -- ./data/db.conf
-          ''
-        );
+        program = 
+          toString 
+            (pkgs.${system}.writeShellApplication {
+              name = "pgREST";
+              runtimeInputs = [ haskellPackages'.${system}.postgrest ];
+              text = 
+              ''
+                if [ -f "./data/db.conf" ]; then  
+                  postgrest ./data/db.conf
+                else
+                  echo "execute 'nix run .#postgres' to setup DB and create the postgrest configuration"
+                fi
+              '';
+            }) + "/bin/pgREST";
       };
     });
     };
