@@ -28,7 +28,7 @@ How is Nix going to solve the above issues?
 - Both Postgres and PostgREST are only present in the Nix shell and since they are installed in Read-only filesystem `/nix`, having multiple different versions will not cause any issues as there is no chance of any rewrites by mistake.
 - The `flake.lock` file will contain the locked content hash, revision and source of "inputs" which will ensure the same source is used on further builds.\
 \
-All these benefits are listed as per the Nixification that will be happening in this blog. More benefits will be depmonstrated in upcoming blogs.
+All these benefits are listed as per the Nixification that will be happening in this blog post. More benefits will be depmonstrated in upcoming blog posts.
 ## Introduce Flake
 
 Let's start by creating a `flake.nix` file in the root directory. The first step after this will be to write the basic template for the flake, which consists of `inputs` and `outputs`. 
