@@ -57,7 +57,7 @@ Let's start by creating a `flake.nix` file in the root directory. The first step
 ```nix
 {
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-  outputs = {self, ...}@inputs: {
+  outputs = inputs@{self, ...}: {
     
 
   };
