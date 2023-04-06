@@ -27,14 +27,14 @@
     in
     {
       # This is what generates the todo-app executable 
-      packages = forAllSystems ( system: {
+      packages = forAllSystems (system: {
         inherit (haskellPackages'.${system}) todo-app;
         default = haskellPackages'.${system}.todo-app;
       });
       # Define what your shell using `nix develop` should comprise of 
-      devShells = forAllSystems ( system: {
+      devShells = forAllSystems (system: {
         default = haskellPackages'.${system}.shellFor {
-          packages = p : [
+          packages = p: [
             # If this is not specified, `cabal build` in devShell will not
             # be able to utilise the derivation built using callCabal2nix.
             # In such a case `cabal build` will try to build the pacakge
@@ -50,75 +50,75 @@
           ];
         };
       });
-    # Define apps that is triggered by `nix run` command. For example,
-    # `nix run .#postgres` will run the script for postgres below
-    apps = forAllSystems ( system: {
-      postgres =
-      {
-        # `type` and `program` are required attributes.
-        #  TODO: include explanation of `type`
-        # `program` denotes the path of the executable to run
-        type = "app";
-        program = 
-          toString 
-            (pkgs.${system}.writeShellApplication {
-              name = "pg";
-              runtimeInputs = with pkgs.${system}; 
-                [ 
-                  postgresql
-                  coreutils
-                ];
-              text = 
-              ''
-                # Initialize a database with data stored in current project dir
-                [ ! -d "./data/db" ] && initdb --no-locale -D ./data/db
+      # Define apps that is triggered by `nix run` command. For example,
+      # `nix run .#postgres` will run the script for postgres below
+      apps = forAllSystems (system: {
+        postgres =
+          {
+            # `type` and `program` are required attributes.
+            #  TODO: include explanation of `type`
+            # `program` denotes the path of the executable to run
+            type = "app";
+            program =
+              toString
+                (pkgs.${system}.writeShellApplication {
+                  name = "pg";
+                  runtimeInputs = with pkgs.${system};
+                    [
+                      postgresql
+                      coreutils
+                    ];
+                  text =
+                    ''
+                      # Initialize a database with data stored in current project dir
+                      [ ! -d "./data/db" ] && initdb --no-locale -D ./data/db
 
-                postgres -D ./data/db -k "$PWD"/data
-              '';
-            }) + "/bin/pg";
-      };
-      createdb = {
-        type = "app";
-        program = 
-          toString 
-            (pkgs.${system}.writeShellApplication {
-              name = "createDB";
-              runtimeInputs = with pkgs.${system}; 
-                [ 
-                  postgresql
-                ];
-              text = 
-              ''
-                # Create a database of your current user
-                if ! psql -h "$PWD"/data -lqt | cut -d \| -f 1 | grep -qw "$(whoami)"; then
-                  createdb -h "$PWD"/data "$(whoami)"
-                fi
+                      postgres -D ./data/db -k "$PWD"/data
+                    '';
+                }) + "/bin/pg";
+          };
+        createdb = {
+          type = "app";
+          program =
+            toString
+              (pkgs.${system}.writeShellApplication {
+                name = "createDB";
+                runtimeInputs = with pkgs.${system};
+                  [
+                    postgresql
+                  ];
+                text =
+                  ''
+                    # Create a database of your current user
+                    if ! psql -h "$PWD"/data -lqt | cut -d \| -f 1 | grep -qw "$(whoami)"; then
+                      createdb -h "$PWD"/data "$(whoami)"
+                    fi
 
-                # Load DB dump
-                # TODO: check if schema already exists
-                psql -h "$PWD"/data < db.sql
+                    # Load DB dump
+                    # TODO: check if schema already exists
+                    psql -h "$PWD"/data < db.sql
                 
-                # Create configuration file for postgrest
-                echo "db-uri = \"postgres://authenticator:mysecretpassword@localhost:5432/$(whoami)\"
-                db-schemas = \"api\"
-                db-anon-role = \"todo_user\"" > data/db.conf
-              '';
-            }) + "/bin/createDB";
-      };
-      
-      postgrest = {
-        type = "app";
-        program = 
-          toString 
-            (pkgs.${system}.writeShellApplication {
-              name = "pgREST";
-              runtimeInputs = [ haskellPackages'.${system}.postgrest ];
-              text = 
-              ''
-                postgrest ./data/db.conf
-              '';
-            }) + "/bin/pgREST";
-      };
-    });
+                    # Create configuration file for postgrest
+                    echo "db-uri = \"postgres://authenticator:mysecretpassword@localhost:5432/$(whoami)\"
+                    db-schemas = \"api\"
+                    db-anon-role = \"todo_user\"" > data/db.conf
+                  '';
+              }) + "/bin/createDB";
+        };
+
+        postgrest = {
+          type = "app";
+          program =
+            toString
+              (pkgs.${system}.writeShellApplication {
+                name = "pgREST";
+                runtimeInputs = [ haskellPackages'.${system}.postgrest ];
+                text =
+                  ''
+                    postgrest ./data/db.conf
+                  '';
+              }) + "/bin/pgREST";
+        };
+      });
     };
 }
