@@ -70,49 +70,40 @@
                 ];
               text = 
               ''
-                # TODO: Echo that a different process is running on port 5432 for a clearer error message
                 # Initialize a database with data stored in current project dir
                 [ ! -d "./data/db" ] && initdb --no-locale -D ./data/db
 
-                # Start your postgres server
-                if ! pg_ctl -D ./data/db status; then
-                  pg_ctl -D ./data/db -l ./data/logfile -o "--unix_socket_directories='$PWD/data'" start
-                fi
-                # Create a database of your current user
-                if ! psql -h "$PWD"/data -lqt | cut -d \| -f 1 | grep -qw "$(whoami)"; then
-                  createdb -h "$PWD"/data "$(whoami)"
-                fi
-                
-                [ ! -d "data" ] && mkdir data 
-
-                # Create configuration file for postgrest
-                echo "db-uri = \"postgres://authenticator:mysecretpassword@localhost:5432/$(whoami)\"
-                db-schemas = \"api\"
-                db-anon-role = \"todo_user\"" > data/db.conf
-
-                # Load DB dump
-                # TODO: check if schema already exists
-                psql -h "$PWD"/data < db.sql
+                postgres -D ./data/db -k "$PWD"/data
               '';
             }) + "/bin/pg";
       };
-      postgres_stop = {
+      createdb = {
         type = "app";
         program = 
           toString 
             (pkgs.${system}.writeShellApplication {
-              name = "pgStop";
+              name = "createDB";
               runtimeInputs = with pkgs.${system}; 
                 [ 
                   postgresql
                 ];
               text = 
               ''
-                [ -d "./data/db" ] && if pg_ctl -D ./data/db status; then
-                  pg_ctl -D ./data/db stop
+                # Create a database of your current user
+                if ! psql -h "$PWD"/data -lqt | cut -d \| -f 1 | grep -qw "$(whoami)"; then
+                  createdb -h "$PWD"/data "$(whoami)"
                 fi
+
+                # Load DB dump
+                # TODO: check if schema already exists
+                psql -h "$PWD"/data < db.sql
+                
+                # Create configuration file for postgrest
+                echo "db-uri = \"postgres://authenticator:mysecretpassword@localhost:5432/$(whoami)\"
+                db-schemas = \"api\"
+                db-anon-role = \"todo_user\"" > data/db.conf
               '';
-            }) + "/bin/pgStop";
+            }) + "/bin/createDB";
       };
       
       postgrest = {
@@ -124,11 +115,7 @@
               runtimeInputs = [ haskellPackages'.${system}.postgrest ];
               text = 
               ''
-                if [ -f "./data/db.conf" ]; then  
-                  postgrest ./data/db.conf
-                else
-                  echo "execute 'nix run .#postgres' to setup DB and create the postgrest configuration"
-                fi
+                postgrest ./data/db.conf
               '';
             }) + "/bin/pgREST";
       };
