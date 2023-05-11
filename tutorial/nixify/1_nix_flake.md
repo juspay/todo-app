@@ -4,15 +4,30 @@ This blog post series is meant to simplify Haskell development workflow for you.
 
 ## Why Nixify?
 
+Why use Nix to develop a Haskell project rather than something like Stack or GHCup?
+
+
 - **No more assumptions**: `Prerequisite: Postgres server` doesn't answer the questions, which version and how? likewise with other prerequisites mentioned in the project like postgREST, cabal-install and GHC. Nix locks these versions in flake.lock, hence you will use the same version as the developer.
-- **Productivity**: More time spent on the code change as Nix does the setup for you with `nix develop`.
-- **Multi-platform**: Same configuration works on your MacOS, Linux and WSL.
+- **Productivity**: More time spent on writing Haskell as Nix gives a fully working development environment with `nix develop`.
+- **Multi-platform**: Same configuration generally works on macOS,[^nm] Linux and WSL.
+
+[^nm]: Although macOS doesn't have first-class support in nixpkgs, [it is getting there](https://github.com/NixOS/nixpkgs/issues/116341).
+
+In the rest of the blog post, we will show step-by-step how to Nixify the todo-app project.
 
 ## Introduce Flake
 
-To begin, we'll clone [todo-app](https://github.com/juspay/todo-app/tree/903c769d4bda0a8028fe3775415e9bdf29d80555) and checkout to the redirected commit. Then create a file named `flake.nix` in the project root directory. The first thing we'll do is create a basic template for the flake, which includes:
+To begin, clone the [todo-app](https://github.com/juspay/todo-app/tree/903c769d4bda0a8028fe3775415e9bdf29d80555) repository and checkout the specified commit.
+
+```sh
+git clone https://github.com/juspay/todo-app.git
+cd todo-app
+git checkout 903c769d4bda0a8028fe3775415e9bdf29d80555
+```
+
+Then create a file named `flake.nix` in the project root directory. The first thing we'll do is create a basic template for the flake, which includes:
 - Define `inputs` and `outputs`
-- Specify the `system` which the flake supports.
+- Specify the `system` corresponding to your machine.
 
 Tl;dr This is how your `flake.nix` will look:
 
@@ -40,7 +55,7 @@ Tl;dr This is how your `flake.nix` will look:
     };
 }
 ```
-In the upcoming subsections we will break down each part of the code block above.
+Let's break down each part of this `flake.nix`:
 
 ### Inputs [^1]
 
@@ -56,18 +71,18 @@ For this example we will use [GNU hello](https://www.gnu.org/software/hello) pac
 
 ### Outputs
 
-- A function that accepts a required parameter `self`[^3] and optionally attributes from `inputs` as parameters. [Refer here](https://nixos.wiki/wiki/Flakes#Output_schema) for a detailed schema of `outputs`. 
-- We will include `nixpkgs` as parameter to use its attributes to define our attributes in the sections below.
-- In the `let` block we also define two things, `system` ("aarch64-darwin" here) and `pkgs` consits of all the packages for `system`. In our example `system` is hardcoded for one system, [forAllSystems](https://zero-to-nix.com/concepts/flakes#system-specificity) can be used to define packages for an array of systems.
+- A function that accepts a required parameter `self`[^3] and optionally attributes from `inputs` as parameters (we are using the `nixpkgs` input here). [Refer here](https://nixos.wiki/wiki/Flakes#Output_schema) for a detailed schema of `outputs`. 
+- In the `let` block we define two values -- `system` ("aarch64-darwin" here, assuming we are on an ARM mac) and `pkgs` (referring to nixpkgs packages for `system`). 
+  - In our example, as `system` is hardcoded for one system, [forAllSystems](https://zero-to-nix.com/concepts/flakes#system-specificity) can be used to define packages for an array of systems.
 
 #### Packages
 
 - Attributes in `packages.${system}` points to [derivation](https://nixos.org/manual/nix/stable/language/derivations.html) that can be used to build the package.
-- `nix build` will build the derivation of the package with the name `default`. Run `nix build .#<packageName>` to build a pacakge with a specific name.
+- `nix build` will build the derivation of the package with the name `default`. Run `nix build .#<packageName>` to build the package named "<packageName>".
 
 #### Apps
 
-- `apps.${system}.<appName>` refers to an attrset with two required attributes `type` and `program`. The `type` attribute determines how the program should be executed, For example, "shell" for a shell script, "python" for a Python script, or "app" for an executable. On the other hand, the `program` attribute is a string that represents the path in the Nix store where the executable is located.
+- `apps.${system}.<appName>` refers to a flake app that can be run using `nix run`. It is attrset containing two keys `type` and `program`. The `type` attribute determines how the program should be executed, For example, "shell" for a shell script, "python" for a Python script, or "app" for an executable. On the other hand, the `program` attribute is a string that represents the path in the Nix store where the executable is located.
 - `nix run` just takes the `executable` and based on `type` executes the `program` given by `apps.${system}.default`. Run `nix run .#<appName>` to run a specific app.
 
 #### DevShells
@@ -77,7 +92,7 @@ For this example we will use [GNU hello](https://www.gnu.org/software/hello) pac
 - `pkgs.mkShell` creates a derivation that is evaluated by the command `nix develop`
 - Derivation given by `devShells.${system}.default` is evaluated by default, you can also define custom `devShell` like `devShells.${system}.mydevShell` and run it using `nix develop .#mydevShell`
 
-It's time to now run the following commands and see the `flake.nix` in action:
+Now you can run the following commands and see this `flake.nix` in action:
 - `nix build`
 - `nix run`
 - `nix develop`
@@ -112,15 +127,15 @@ Tl;dr Here's the `flake.nix` for this section:
 Let's break it down!
 ### haskellPackages
 
-This is an attribute set that consists of all the haskell projects maintained in Nixpkgs. Since our local project will not be part of this, we have to add it. Technically you can just use  `packages.${system}.default = pkgs.${system}.haskellPackages.callCabal2nix "todo-app" ./. { };` but adding it to `haskellPackages` keeps it all in one place and consuming flakes will not have to think about where to find this package. 
+`pkgs.haskellPackages` is an attribute set consisting of all haskell packages maintained in nixpkgs. Since our local package (`todo-app`) is not already in it, we will have to add it manually. Technically you can just use  `packages.${system}.default = pkgs.${system}.haskellPackages.callCabal2nix "todo-app" ./. { };` but adding it to `haskellPackages` keeps it all in one place and any consuming flake will not have to think about where to find this package. 
 
 ### Overlay
 
-This is a function that will output an attribute consisting of the packages that you want to either add into `haskellPackages` or replace if they already exist. It takes two parameters, first parameter being the final state of `haskellPackages` after applying all the overrides and the second being the state of `haskellPackages` before applying the overrides.
+[Overlays](https://nixos.wiki/wiki/Overlays) are used to override an existing package set, such as `pkgs.haskellPackages`, and produce a new package set containing the changes we want. These changes could be either about overriding a single package in the package set (the second argument `super` references the original package set), or it could be about adding new packages to it. 
 
 ### callCabal2nix
 
-A function that takes the `name` of package (`todo-app`), `src` of cabal file (`./.`, i.e current directory), and overrides (`{ }`, i.e none) as parameters and returns a derivation that will build your package. This function internally uses ["cabal2nix"](https://github.com/NixOS/cabal2nix), a Haskell tool that generates Nix build instructions from a cabal file.
+The `callCabal2nix` function produces a Haskell package derivation given its source. This function internally uses ["cabal2nix"](https://github.com/NixOS/cabal2nix), a Haskell tool that generates Nix build instructions from a cabal file.
 
 ### Time to run!
 After replacing the previous `flake.nix` with the current one, run the following:
@@ -129,7 +144,7 @@ After replacing the previous `flake.nix` with the current one, run the following
 
 ## Nixify DevShell
 
-We can now build the `todo-app`! What if you want to make changes in the project and have a quick feedback on the change? [`ghcid`](https://github.com/ndmitchell/ghcid) or [`cabal repl`](https://cabal.readthedocs.io/en/3.4/cabal-commands.html#cabal-v2-repl) can be used here. These tools require a GHC loaded with packages mentioned in `build-depends` of your cabal file, which is what a `devShell` will provide (an isolated environment with custom GHC).\
+Our current flake enables us to *build* the `todo-app`. However, what if want to develop it, by adding a feature or fixing a bug? For Haskell development, we normally use [cabal](https://cabal.readthedocs.io/) and tools like [ghcid](https://github.com/ndmitchell/ghcid). These tools require a GHC loaded with packages mentioned in `build-depends` of your cabal file, which is what we want a`devShell` to provide (ie., an isolated environment with custom GHC).
 Tl;dr Here's the `flake.nix` for this section:
 ```nix
 {
@@ -147,22 +162,22 @@ Tl;dr Here's the `flake.nix` for this section:
     in
     {
       devShells.${system}.default = myHaskellPackages.shellFor {
-          packages = p : [
-            p.todo-app
-          ];
-          buildInputs = with myHaskellPackages; [
-            ghcid
-            cabal-install
-            todo-app
-          ];
-        };
+        packages = p : [
+          p.todo-app
+        ];
+        buildInputs = with myHaskellPackages; [
+          ghcid
+          cabal-install
+          todo-app
+        ];
+      };
     };
 }
 ```
 
 ### shellFor
 
-We will be using `shellFor`, a function defined in `haskellPackages` to set up the default shell for our project. `shellFor` is tailor made for Haskell projects, hence we choose this over `mkShell`. We only need to define two attributes, `packages` and `buildInputs`. `packages` is used to provide the Nix build instructions that we defined earlier for todo-app, so that the shell doesn't start building todo-app again. `buildInputs` is used to ensure that the specified packages are present in the `PATH` of the isolated development environment.
+In the above flake, we are using [`shellFor`](https://nixos.wiki/wiki/Haskell#Using_shellFor_.28multiple_packages.29) (a function defined in `haskellPackages` attrset) to set up the default shell for our project. `shellFor` is an abstraction over [`mkShell`](https://ryantm.github.io/nixpkgs/builders/special/mkshell/) geared specifically for Haskell development shells. Generally, we only need to define two keys `packages` and `nativeBuildInputs`. `packages` marks which of the packages in the package set are *local* packages (to be compiled by cabal). `nativeBuildInputs` is used to ensure that the specified packages are present in the `PATH` of the isolated development environment.
 
 ### Let's run!
 
@@ -172,7 +187,7 @@ We will be using `shellFor`, a function defined in `haskellPackages` to set up t
 
 ## Nixify external dependencies
 
-Most of real-world applications will rely on external dependencies like Postgres, MySQL, Redis and so on. In this section we will look at how you can start a postgres server using `nix run .#postgres` and also create the data directory local to the project.\
+So far we nixified the Haskell part of our project. But a project can also have non-Haskell dependencies, like Postgres, MySQL and redis. In this section we will specifically look at how you can start a postgres server using Nix without relying or mutating global state (outside of project directory).
 Tl;dr Here's the `flake.nix`:
 ```nix
 {
@@ -188,8 +203,8 @@ Tl;dr Here's the `flake.nix`:
     apps.${system}.postgres = {
       type = "app";
       program = 
-        toString 
-          (pkgs.writeShellApplication {
+        let
+          script = pkgs.writeShellApplication {
             name = "pg_start";
             runtimeInputs = [ pkgs.postgresql ];
             text = 
@@ -199,16 +214,17 @@ Tl;dr Here's the `flake.nix`:
 
               postgres -D ./data/db -k "$PWD"/data
             '';
-          }) + "/bin/pg_start";
+          };
+        in "${script}/bin/pg_start";
     };
   };
 }
 ```
 ### writeShellApplication
 
-- A function that generates a derivation to run the shell script in an isolated environment. 
-- `runtimeInputs` are provided to the application.
-- `writeShellApplication` comes with [shellcheck](https://github.com/koalaman/shellcheck) which checks the shell script for errors.
+- A function that generates a derivation of the shell script provided as `text`. 
+- `runtimeInputs`: packages to be made available to the shell application's PATH.
+- `writeShellApplication` uses [shellcheck](https://github.com/koalaman/shellcheck) to statically analyze your bash script for issues.
 - `toString` function applied to `writeShellApplication` gives the path in the `nix/store` where this is located.
 
 ### Run it!
@@ -216,8 +232,9 @@ Tl;dr Here's the `flake.nix`:
 - `nix run .#postgres` will start postgres server in your current shell.
 
 
-## Before vs After
-
-- Installing postgres, starting server, loading db dump and creating database configuration for postgREST is now, `nix run .#postgres`
-- Installing and running postgREST webserver is now, `nix run .#postgrest`
-- Installing cabal-install, building the project is now, `nix develop`(for development shell), `nix build` (to build the executable) and `nix run` (to run the todo-app)
+## Conclude
+| Before                                                                                                  | After                                                                                                            |
+|---------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| Installing postgres, starting server, loading db dump and creating database configuration for postgREST | `nix run .#postgres`                                                                                             |
+| Installing and running postgREST webserver                                                              | `nix run .#postgrest`                                                                                            |
+| Installing cabal-install, building the project is now                                                   | `nix develop` (for development shell), `nix build` (to build the executable) and `nix run` (to run the todo-app) |
