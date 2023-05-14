@@ -326,6 +326,9 @@ It's time to combine each of the sections above into one `flake.nix`. We should 
 ```
 Visit [here](https://github.com/juspay/todo-app/tree/tutorial/1) for the complete source code. The source code uses [`forAllSystems`](https://zero-to-nix.com/concepts/flakes#system-specificity), which is not added in the tutorial above to keep it simple.
 
+### Video Walkthrough
+[![asciicast](https://asciinema.org/a/TxxWYyILeWstTD3AO9eDI551X.svg)](https://asciinema.org/a/TxxWYyILeWstTD3AO9eDI551X)
+
 ## Conclude
 | Before                                                                                                  | After                                                                                                            |
 |---------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
