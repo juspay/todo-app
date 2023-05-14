@@ -92,10 +92,8 @@ For this example we will use [GNU hello](https://www.gnu.org/software/hello) pac
 - `pkgs.mkShell` creates a derivation that is evaluated by the command `nix develop`
 - Derivation given by `devShells.${system}.default` is evaluated by default, you can also define custom `devShell` like `devShells.${system}.mydevShell` and run it using `nix develop .#mydevShell`
 
-Now you can run the following commands and see this `flake.nix` in action:
-- `nix build`
-- `nix run`
-- `nix develop`
+#### See the flake in action
+[![asciicast](https://asciinema.org/a/zsS2g0RCHv05pxPMv5We2ibj3.svg)](https://asciinema.org/a/zsS2g0RCHv05pxPMv5We2ibj3)
 
 ## Nixify Haskell package
 
@@ -138,9 +136,7 @@ Let's break it down!
 The `callCabal2nix` function produces a Haskell package derivation given its source. This function internally uses ["cabal2nix"](https://github.com/NixOS/cabal2nix), a Haskell tool that generates Nix build instructions from a cabal file.
 
 ### Time to run!
-After replacing the previous `flake.nix` with the current one, run the following:
-- `nix build` builds the haskell project and symlinks your executable in `./result/bin`
-- `nix run` builds (if not already) and runs the `todo-app` executable
+[![asciicast](https://asciinema.org/a/1dRgdxS6PfOPBoKpzrDxGa17p.svg)](https://asciinema.org/a/1dRgdxS6PfOPBoKpzrDxGa17p)
 
 ## Nixify DevShell
 
@@ -180,10 +176,7 @@ Tl;dr Here's the `flake.nix` for this section:
 In the above flake, we are using [`shellFor`](https://nixos.wiki/wiki/Haskell#Using_shellFor_.28multiple_packages.29) (a function defined in `haskellPackages` attrset) to set up the default shell for our project. `shellFor` is an abstraction over [`mkShell`](https://ryantm.github.io/nixpkgs/builders/special/mkshell/) geared specifically for Haskell development shells. Generally, we only need to define two keys `packages` and `nativeBuildInputs`. `packages` marks which of the packages in the package set are *local* packages (to be compiled by cabal). `nativeBuildInputs` is used to ensure that the specified packages are present in the `PATH` of the isolated development environment.
 
 ### Let's run!
-
-- `nix develop` this will start a development shell
-- `cabal repl` loads all project modules
-- `ghcid -c "cabal repl exe:todo-app"` reloads your repl session everytime there is a code change
+[![asciicast](https://asciinema.org/a/dTy3ESOIlBXF6W3eLQxnJ4ab8.svg)](https://asciinema.org/a/dTy3ESOIlBXF6W3eLQxnJ4ab8)
 
 ## Nixify external dependencies
 
@@ -228,9 +221,110 @@ Tl;dr Here's the `flake.nix`:
 - `toString` function applied to `writeShellApplication` gives the path in the `nix/store` where this is located.
 
 ### Run it!
+[![asciicast](https://asciinema.org/a/uwFCuD7mSEJch6Ixm4cDfqgW5.svg)](https://asciinema.org/a/uwFCuD7mSEJch6Ixm4cDfqgW5)
 
-- `nix run .#postgres` will start postgres server in your current shell.
+## Nixify Combined
 
+It's time to combine each of the sections above into one `flake.nix`. We should also include apps for `postgREST` and `createDB`
+(Load the DB dump, create DB user and create DB configuration for `postgREST`).
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+  };
+  outputs = { self, nixpkgs }:
+    let
+      system = "aarch64-darwin";
+      pkgs = nixpkgs.legacyPackages.${system};
+      overlay = final: prev: {
+        todo-app = final.callCabal2nix "todo-app" ./. { };
+      };
+      myHaskellPackages = pkgs.haskellPackages.extend overlay;
+    in
+    {
+      packages.${system}.default = myHaskellPackages.todo-app;
+
+      devShells.${system}.default = myHaskellPackages.shellFor {
+        packages = p: [
+          p.todo-app
+        ];
+        buildInputs = with myHaskellPackages; [
+          ghcid
+          cabal-install
+          todo-app
+          haskell-language-server
+        ];
+      };
+
+      apps.${system} = {
+        default = {
+          type = "app";
+          program = "${self.packages.${system}.default}/bin/todo-app";
+        };
+        postgres = {
+          type = "app";
+          program =
+            let
+              script = pkgs.writeShellApplication {
+                name = "pg_start";
+                runtimeInputs = [ pkgs.postgresql ];
+                text =
+                  ''
+                    # Initialize a database with data stored in current project dir
+                    [ ! -d "./data/db" ] && initdb --no-locale -D ./data/db
+
+                    postgres -D ./data/db -k "$PWD"/data
+                  '';
+              };
+            in
+            "${script}/bin/pg_start";
+        };
+        createdb = {
+          type = "app";
+          program =
+            let
+              script = pkgs.writeShellApplication {
+                name = "createDB";
+                runtimeInputs = [ pkgs.postgresql ];
+                text =
+                  ''
+                    # Create a database of your current user
+                    if ! psql -h "$PWD"/data -lqt | cut -d \| -f 1 | grep -qw "$(whoami)"; then
+                      createdb -h "$PWD"/data "$(whoami)"
+                    fi
+
+                    # Load DB dump
+                    psql -h "$PWD"/data < db.sql
+
+                    # Create configuration file for postgrest
+                    echo "db-uri = \"postgres://authenticator:mysecretpassword@localhost:5432/$(whoami)\"
+                    db-schemas = \"api\"
+                    db-anon-role = \"todo_user\"" > data/db.conf
+                  '';
+              };
+            in
+            "${script}/bin/createDB";
+        };
+        postgrest = {
+          type = "app";
+          program =
+            let
+              script = pkgs.writeShellApplication {
+                name = "pgREST";
+                runtimeInputs = [ myHaskellPackages.postgrest ];
+                text =
+                  ''
+                    postgrest ./data/db.conf
+                  '';
+              };
+            in
+            "${script}/bin/pgREST";
+        };
+      };
+    };
+}
+```
+Visit [here](https://github.com/juspay/todo-app/tree/tutorial/1) for the complete source code. The source code uses [`forAllSystems`](https://zero-to-nix.com/concepts/flakes#system-specificity), which is not added in the tutorial above to keep it simple.
 
 ## Conclude
 | Before                                                                                                  | After                                                                                                            |
@@ -238,3 +332,9 @@ Tl;dr Here's the `flake.nix`:
 | Installing postgres, starting server, loading db dump and creating database configuration for postgREST | `nix run .#postgres`                                                                                             |
 | Installing and running postgREST webserver                                                              | `nix run .#postgrest`                                                                                            |
 | Installing cabal-install, building the project is now                                                   | `nix develop` (for development shell), `nix build` (to build the executable) and `nix run` (to run the todo-app) |
+
+## Up Next!
+We will be modularizing the `flake.nix` using [`flake-parts`](https://flake.parts/)
+
+## Acknowledgements
+After going through numerous iterations, I am grateful to [srid](https://srid.ca/) for their valuable assistance in bringing this blog to its current stage.
