@@ -72,6 +72,7 @@ For this example we will use [GNU hello](https://www.gnu.org/software/hello) pac
 ### Outputs
 
 - A function that accepts a required parameter `self`[^3] and optionally attributes from `inputs` as parameters (we are using the `nixpkgs` input here). [Refer here](https://nixos.wiki/wiki/Flakes#Output_schema) for a detailed schema of `outputs`. 
+- `nixpkgs` in the parameter attrset is the `outputs` of the `flake.nix` located at `nixpkgs.url`. If `nixpkgs.flake = false` is set then the parameter will be the source code. 
 - In the `let` block we define two values -- `system` ("aarch64-darwin" here, assuming we are on an ARM mac) and `pkgs` (referring to nixpkgs packages for `system`). 
   - In our example, as `system` is hardcoded for one system, [forAllSystems](https://zero-to-nix.com/concepts/flakes#system-specificity) can be used to define packages for an array of systems.
 
