@@ -23,17 +23,17 @@
         todo-app = final.callCabal2nix "todo-app" ./. { };
       };
       # Extend the `pkgs.haskellPackages` attrset using an overlay.
-      haskellPackages' = forAllSystems (system: pkgs.${system}.haskellPackages.extend overlay);
+      myHaskellPackages = forAllSystems (system: pkgs.${system}.haskellPackages.extend overlay);
     in
     {
       # This is what generates the todo-app executable 
       packages = forAllSystems (system: {
-        inherit (haskellPackages'.${system}) todo-app;
-        default = haskellPackages'.${system}.todo-app;
+        inherit (myHaskellPackages.${system}) todo-app;
+        default = myHaskellPackages.${system}.todo-app;
       });
       # Define what your shell using `nix develop` should comprise of 
       devShells = forAllSystems (system: {
-        default = haskellPackages'.${system}.shellFor {
+        default = myHaskellPackages.${system}.shellFor {
           packages = p: [
             # If this is not specified, `cabal build` in devShell will not
             # be able to utilise the derivation built using callCabal2nix.
@@ -44,7 +44,7 @@
           ];
           # These packages will be installed and their `/bin` path is 
           # added to PATH env of the devShell
-          buildInputs = with haskellPackages'.${system}; [
+          buildInputs = with myHaskellPackages.${system}; [
             cabal-install
             todo-app
           ];
@@ -56,18 +56,15 @@
         postgres =
           {
             # `type` and `program` are required attributes.
-            #  TODO: include explanation of `type`
+            # The type attribute determines how the program should be executed, For example, "shell" for a shell script,
+            # "python" for a Python script, or "app" for an executable.
             # `program` denotes the path of the executable to run
             type = "app";
             program =
-              toString
-                (pkgs.${system}.writeShellApplication {
-                  name = "pg";
-                  runtimeInputs = with pkgs.${system};
-                    [
-                      postgresql
-                      coreutils
-                    ];
+              let
+                script = pkgs.${system}.writeShellApplication {
+                  name = "pg_start";
+                  runtimeInputs = [ pkgs.${system}.postgresql ];
                   text =
                     ''
                       # Initialize a database with data stored in current project dir
@@ -75,18 +72,17 @@
 
                       postgres -D ./data/db -k "$PWD"/data
                     '';
-                }) + "/bin/pg";
+                };
+              in
+              "${script}/bin/pg_start";
           };
         createdb = {
           type = "app";
           program =
-            toString
-              (pkgs.${system}.writeShellApplication {
-                name = "createDB";
-                runtimeInputs = with pkgs.${system};
-                  [
-                    postgresql
-                  ];
+            let
+              script = pkgs.${system}.writeShellApplication {
+                name = "create_db";
+                runtimeInputs = [ pkgs.${system}.postgresql ];
                 text =
                   ''
                     # Create a database of your current user
@@ -103,21 +99,25 @@
                     db-schemas = \"api\"
                     db-anon-role = \"todo_user\"" > data/db.conf
                   '';
-              }) + "/bin/createDB";
+              };
+            in
+            "${script}/bin/create_db";
         };
 
         postgrest = {
           type = "app";
           program =
-            toString
-              (pkgs.${system}.writeShellApplication {
-                name = "pgREST";
-                runtimeInputs = [ haskellPackages'.${system}.postgrest ];
+            let
+              script = pkgs.${system}.writeShellApplication {
+                name = "pg_rest";
+                runtimeInputs = [ myHaskellPackages.${system}.postgrest ];
                 text =
                   ''
                     postgrest ./data/db.conf
                   '';
-              }) + "/bin/pgREST";
+              };
+            in
+            "${script}/bin/pg_rest";
         };
       });
     };
