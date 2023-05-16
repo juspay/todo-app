@@ -55,7 +55,7 @@ Tl;dr This is how your `flake.nix` will look:
     };
 }
 ```
-Let's break down each part of this `flake.nix`:
+A nix flake such as the one above consumes certain `inputs` and produces certain `outputs`. Let's break down each part of this `flake.nix`:
 
 ### Inputs [^1]
 
