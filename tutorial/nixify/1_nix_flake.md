@@ -65,9 +65,9 @@ A nix flake such as the one above consumes certain `inputs` and produces certain
 [^2]: `nixpkgs-unstable` branch is named as such because of the frequent updates it receives and doesn't imply that it is unsafe.
 [^3]: `self` refers to the final state of attributes in the `outputs`. For example, `self.packages.${system}.default` refers to the attribute after assigning `pkgs.hello` to it.
 
-When working with Nix Flake, there are two methods to indicate the location of an input flake: the attribute set representation and the URL-like syntax. In this blog post, we will utilize the latter approach for the sake of simplicity. If you are interested in learning more about these representations, you can find additional information [here](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html#url-like-syntax).
+A flake can reference other flakes, which are specified in the `inputs` attribute. We will use the [URL-like representation](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html#url-like-syntax) to specify our input flakes.
 
-In this example, we will use [GNU hello](https://www.gnu.org/software/hello) package from [`nixpkgs`](https://github.com/NixOS/nixpkgs) repository's `nixpkgs-unstable`[^2] branch. 
+In this example, we will use [GNU hello](https://www.gnu.org/software/hello) package from [`nixpkgs`](https://github.com/NixOS/nixpkgs) flake. Therefore, we'll specify the nixpkgs flake as an input, specifically using its `nixpkgs-unstable`[^2] branch. 
 
 ### Outputs
 
