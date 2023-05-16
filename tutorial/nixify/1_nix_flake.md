@@ -12,7 +12,7 @@ Why use Nix to develop a Haskell project rather than something like Stack or GHC
 
 [^nm]: Although macOS doesn't have first-class support in nixpkgs, [it is getting there](https://github.com/NixOS/nixpkgs/issues/116341).
 
-In the remaining sections of this blog post, we will provide a step-by-step demonstration of how to Nixify the todo-app project.
+The rest of this blog post will provide a step-by-step demonstration of how to Nixify the todo-app project.
 
 
 ## Introduce Flake
