@@ -71,10 +71,13 @@ In this example, we will use [GNU hello](https://www.gnu.org/software/hello) pac
 
 ### Outputs
 
-- This function requires a mandatory parameter called `self`[^3] and optionally accept attributes from `inputs` as parameters, with nixpkgs being the input used in this case. [Refer here](https://nixos.wiki/wiki/Flakes#Output_schema) for a detailed schema of `outputs`. 
-- The `nixpkgs` parameter within the attrset refers to the `outputs` of the `flake.nix` located at `nixpkgs.url`. If `nixpkgs.flake = false` is set, then the parameter will represent the source code. 
-- Within the `let` block we define two values -- `system` (set as "aarch64-darwin" in this example, assuming we are on an ARM mac) and `pkgs` (referring to nixpkgs packages for `system`). 
-  - In our example, as `system` is hardcoded for a single system, [forAllSystems](https://zero-to-nix.com/concepts/flakes#system-specificity) can be used to define packages for an array of systems.
+The `outputs` attribute of a flake is essentially a Nix function that takes inputs and returns the outputs attribute. 
+
+The inputs argument is an attrset containing `self`[^3] as well as the flake inputs (in our flake, we reference the only input `nixpkgs`). [Refer here](https://nixos.wiki/wiki/Flakes#Output_schema) for a detailed schema of `outputs`. Note that the `nixpkgs` key within the inputs attrset refers to the `outputs` of the `flake.nix` located at `nixpkgs.url`. If `nixpkgs.flake = false` is set, then the parameter will represent the source code. 
+
+The body of the function defines the flake outputs. Within the `let` block we define two values -- `system` (set as "aarch64-darwin" in this example, assuming we are on an ARM mac) and `pkgs` (referring to nixpkgs packages for `system`). In our example, `system` is hardcoded to a single system, but [forAllSystems](https://zero-to-nix.com/concepts/flakes#system-specificity) can be used to define packages for an array of systems.
+
+Here are some standard outputs a flake may produce:
 
 #### Packages
 
