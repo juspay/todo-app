@@ -6,10 +6,13 @@ The purpose of this blog posts series is to simplify Haskell development workflo
 
 Why use Nix to develop a Haskell project rather than something like Stack or GHCup?
 
-- **Reproducibility**: It is important to note that the Postgres server, as well as other mentioned prerequisites (in `README.md`) like postgREST, cabal-install, and GHC, do not provide the necessary information regarding their versions. Nix addresses this issue by locking these versions in `flake.lock`, ensuring that you use the same versions as the developer.
+- **Instant onboarding**: Projects have READMEs that describe how to setup the development environment but these instructions do not work the same way for 
+every developer and usually takes hours or days to setup. With Nix the setup is instantaneous and reproducible,[^nix] which means any new developer
+can get the development environment up and running with one command.
 - **Enhanced productivity**: More time spent on writing Haskell as Nix gives a fully working development environment with `nix develop`.
 - **Multi-platform**: Same configuration generally works on macOS,[^nm] Linux and WSL.
 
+[^nix]: Considering the packages are available in Nix for the host platform.
 [^nm]: Although macOS doesn't have first-class support in nixpkgs, [it is getting there](https://github.com/NixOS/nixpkgs/issues/116341).
 
 The rest of this blog post will provide a step-by-step demonstration of how to Nixify the todo-app project.
@@ -345,14 +348,16 @@ For the complete souce code, visit [here](https://github.com/juspay/todo-app/tre
 ### Video Walkthrough
 [![asciicast](https://asciinema.org/a/TxxWYyILeWstTD3AO9eDI551X.svg)](https://asciinema.org/a/TxxWYyILeWstTD3AO9eDI551X)
 
-## Conclude
-| Before                                                                                                  | After                                                                                                            |
-|---------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| Installing postgres, starting server, loading db dump and creating database configuration for postgREST | `nix run .#postgres`                                                                                             |
-| Installing and running postgREST webserver                                                              | `nix run .#postgrest`                                                                                            |
-| Installing cabal-install, building the project is now                                                   | `nix develop` (for development shell), `nix build` (to build the executable) and `nix run` (to run the todo-app) |
+## Conclusion
 
-## Up Next
+Let's see how the blog post addresses the points from the section [Why Nixify?](#why-nixify) 
+- **Instant onboarding**: There is no confusion about how to setup the development environment. It is `nix run .#postgres` to start the postgres server,
+`nix run .#createdb` to setup the database and `nix run .#postgrest` to start the Postgrest web server. This happens in a reproducible way, ensuring every
+developer gets the same environment.
+- **Enhanced productivity**: The commands mentioned in the previous points in conjunction with `nix develop` is all that is needed to make a quick change
+and see it in effect.
+- **Multi-platform**: All the commands mentioned in the previous points will work in the same way across platforms.
+
 In the next blog post, we will modularize this `flake.nix` using the [`flake-parts`](https://flake.parts/) framework by Robert Hensing.
 
 ## Credits
