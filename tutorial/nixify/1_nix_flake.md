@@ -354,8 +354,8 @@ For the complete souce code, visit [here](https://github.com/juspay/todo-app/tre
 | Installing and running postgREST webserver                                                              | `nix run .#postgrest`                                                                                            |
 | Installing cabal-install, building the project is now                                                   | `nix develop` (for development shell), `nix build` (to build the executable) and `nix run` (to run the todo-app) |
 
-## Up Next!
-We will modularize the `flake.nix` using [`flake-parts`](https://flake.parts/).
+## Up Next
+In the next blog post, we will modularize this `flake.nix` using the [`flake-parts`](https://flake.parts/) framework by Robert Hensing.
 
 ## Credits
 After going through numerous iterations, I am grateful to [srid](https://srid.ca/) for their valuable assistance in bringing this blog to its current stage.
