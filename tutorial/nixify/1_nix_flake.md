@@ -6,7 +6,7 @@ The purpose of this blog posts series is to simplify Haskell development workflo
 
 Why use Nix to develop a Haskell project rather than something like Stack or GHCup?
 
-- **Let's start with the prerequisites**: It is important to note that the Postgres server, as well as other mentioned prerequisites like postgREST, cabal-install, and GHC, do not provide the necessary information regarding their versions. Nix addresses this issue by locking these versions in `flake.lock`, ensuring that you use the same versions as the developer.
+- **Reproducibility**: It is important to note that the Postgres server, as well as other mentioned prerequisites (in `README.md`) like postgREST, cabal-install, and GHC, do not provide the necessary information regarding their versions. Nix addresses this issue by locking these versions in `flake.lock`, ensuring that you use the same versions as the developer.
 - **Enhanced productivity**: More time spent on writing Haskell as Nix gives a fully working development environment with `nix develop`.
 - **Multi-platform**: Same configuration generally works on macOS,[^nm] Linux and WSL.
 
@@ -179,7 +179,6 @@ Tl;dr Here is the `flake.nix` for this section:
         buildInputs = with myHaskellPackages; [
           ghcid
           cabal-install
-          todo-app
         ];
       };
     };
@@ -269,7 +268,6 @@ Now it's time to consolidate all the previously discussed sections into a single
         buildInputs = with myHaskellPackages; [
           ghcid
           cabal-install
-          todo-app
           haskell-language-server
         ];
       };
