@@ -131,6 +131,8 @@ Tl;dr Here is the `flake.nix` for this section:
 Let's break it down!
 ### haskellPackages
 
+Consult [the official manual](https://nixos.org/manual/nixpkgs/unstable/#haskell) to learn more about the Haskell infrastructure in nixpkgs, but for the purpose of our blog post it is suffice to know that:
+
 - `pkgs.haskellPackages` is an attribute set that contains all Haskell packages maintained within `nixpkgs`.
 - Since our local package (`todo-app`) is not already included in `pkgs.haskellPackages`, we need to manually add it.
 - Technically, you can use `packages.${system}.default = pkgs.${system}.haskellPackages.callCabal2nix "todo-app" ./. { };` to include the package. However, adding it to `haskellPackages` consolidates every Haskell package in one place. 
