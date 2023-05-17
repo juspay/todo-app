@@ -101,7 +101,7 @@ Here are some standard outputs a flake may produce:
 
 ## Nixify Haskell package
 
-After exploring the usage of `pkgs.hello` from `nixpkgs` in the previous basic example, it is now time to define build instructions for creating a package specific to the Haskell project, `todo-app`.
+In the previous section we wrote a hello world flake that contains the "hello" package. Now, let's write a flake for our Haskell project `todo-app`.
 
 Tl;dr Here is the `flake.nix` for this section:
 
