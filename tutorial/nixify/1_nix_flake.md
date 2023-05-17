@@ -81,8 +81,8 @@ Here are some standard outputs a flake may produce:
 
 #### Packages
 
-- The attributes in `packages.${system}` indicate the [derivation](https://nixos.org/manual/nix/stable/language/derivations.html) that can be utilized to build the package.
-- Executing `nix build` will build the derivation of the package with the `default` name. Run `nix build .#<packageName>` to build the package named `<packageName>`.
+- A flake's `packages.${system}` output contains [derivations](https://nixos.org/manual/nix/stable/language/derivations.html) that can be utilized to build the package.
+- Executing `nix build` will build the `packages.${system}.default` output. Run `nix build .#<packageName>` to build the package named `packages.${system}.<packageName>`.
 
 #### Apps
 
