@@ -233,7 +233,7 @@ Tl;dr Here's the `flake.nix`:
 ```
 ### writeShellApplication
 
-- This function generates a derivation for a shell script specified as the value for `text` attribute. 
+- The [`writeShellApplication`](https://noogle.dev/?selected=%22build-support.trivial-builders.writeShellApplication%22&term=%22writeShellApplication%22) function generates a derivation for a shell script specified as the value for `text` attribute. 
 - `runtimeInputs`: packages to be made available to the shell application's PATH.
 - `writeShellApplication` uses [shellcheck](https://github.com/koalaman/shellcheck) to statically analyze your bash script for issues.
 - `"${script}"` provides the path in the `nix/store` where the application is located.
