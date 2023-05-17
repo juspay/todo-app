@@ -86,8 +86,9 @@ Here are some standard outputs a flake may produce:
 
 #### Apps
 
-- The `apps.${system}.<appName>` attribute refers to a flake app that can be exeucted using `nix run`. It is attribute set containing two keys `type` and `program`. The `type` attribute determines how the program should be executed. For instance, "shell" indicates a shell script, "python" indicates a Python script, and "app" indicates an executable. On the other hand, the `program` attribute is a string representing the path in the Nix store where the executable is located.
-- `nix run` takes the `executable` and based on `type` executes the `program` given by `apps.${system}.default`. Run `nix run .#<appName>` to run the app named `<appName>`.
+- A flake's `apps.${system}.<appName>` output refers to a flake app that can be exeucted using `nix run`. 
+  - It is attribute set containing two keys `type` and `program`. The `type` attribute determines how the program should be executed. For instance, "shell" indicates a shell script, "python" indicates a Python script, and "app" indicates an executable. The `program` attribute is a string representing the path in the Nix store where the executable is located.
+- Executing `nix run` will run the `apps.${system}.default` app. Run `nix run .#<appName>` to run the app named `<appName>`.
 
 #### DevShells
 
