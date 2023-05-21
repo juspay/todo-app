@@ -46,7 +46,8 @@
           # added to PATH env of the devShell
           buildInputs = with myHaskellPackages.${system}; [
             cabal-install
-            todo-app
+            ghcid
+            haskell-language-server
           ];
         };
       });
