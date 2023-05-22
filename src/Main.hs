@@ -62,9 +62,8 @@ main = do
       info
         (helper <*> versionOption <*> programOptions)
         ( fullDesc
-            <> progDesc "optparse subcommands example"
             <> header
-              "optparse-sub-example - a small example program for optparse-applicative with subcommands"
+              "todo-app - A demo Haskell app showing the use of `flake-parts` to enable various dev workflows"
         )
     versionOption :: Parser (a -> a)
     versionOption = infoOption "0.0" (long "version" <> help "Show version")
