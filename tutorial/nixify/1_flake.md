@@ -1,20 +1,28 @@
-# Nixify your haskell project
+---
+description: Introduction to simplifying haskell development with nix.
+slug: nixify-haskell-project-intro
+authors: shivaraj-bh
+tags: [haskell, basics, flakes, nix]
+hide_table_of_contents: false
+---
+# Nixify your haskell project: Introduction
 
-The purpose of this blog posts series is to simplify Haskell development workflow for you. In this post we will introduce [Nix](https://nixos.org/) as solution to this. Nix is a powerful package manager and build system that provides reproducible and declarative development environment. We will utilize [Nix flakes](https://nixos.wiki/wiki/Flakes) [^flakes] to declaratively configure this environment[^pkg]. If you're unfamiliar with Nix, we have [a quick introduction](https://zero-to-flakes.com/nix-rapid) available to help you get started quickly or you can take your time and explore it at [Zero to Nix](https://zero-to-nix.com). A basic understanding of the Nix expression language is assumed. Throughout the series, we will utilize a simple Haskell app called [todo-app](https://github.com/juspay/todo-app/tree/903c769d4bda0a8028fe3775415e9bdf29d80555) to illustrate how to build a Haskell project and automatically manage runtime dependencies such as databases (ie., [postgres](https://www.postgresql.org)) and and other services (here, we use [postgREST](https://postgrest.org/en/stable)), eliminating the need for any manual onboarding setup. This will allow us to highlight the advantages of using Nix.
-[^flakes]: We strongly recommend flakes for anyone getting started with Nix. Flakes is production ready despite being marked as experimental. 
-[^pkg]: The Haskell infrastructure in [nixpkgs](https://github.com/nixos/nixpkgs) is the simplest way to get started with Nixifying a Haskell project. There are also other approaches (like [haskell.nix](https://github.com/input-output-hk/haskell.nix), [stacklock2nix](https://github.com/cdepillabout/stacklock2nix)). Later in the blog post series, we'll explore [haskell-flake](https://github.com/srid/haskell-flake) which builds on top of the Haskell infrastructure in nixpkgs
+The purpose of this blog posts series is to simplify Haskell development workflow for you. In this post we will introduce [Nix](https://nixos.org/) as solution to this. Nix is a powerful package manager and build system that provides reproducible and declarative development environment. We will utilize [Nix flakes](https://nixos.wiki/wiki/Flakes) [^1] to declaratively configure this environment[^2]. If you're unfamiliar with Nix, we have [a quick introduction](https://zero-to-flakes.com/nix-rapid) available to help you get started quickly or you can take your time and explore it at [Zero to Nix](https://zero-to-nix.com). A basic understanding of the Nix expression language is assumed. Throughout the series, we will utilize a simple Haskell app called [todo-app](https://github.com/juspay/todo-app/tree/903c769d4bda0a8028fe3775415e9bdf29d80555) to illustrate how to build a Haskell project and automatically manage runtime dependencies such as databases (ie., [postgres](https://www.postgresql.org)) and and other services (here, we use [postgREST](https://postgrest.org/en/stable)), eliminating the need for any manual onboarding setup. This will allow us to highlight the advantages of using Nix.
+
+[^1]: We strongly recommend flakes for anyone getting started with Nix. Flakes is production ready despite being marked as experimental. 
+[^2]: The Haskell infrastructure in [nixpkgs](https://github.com/nixos/nixpkgs) is the simplest way to get started with Nixifying a Haskell project. There are also other approaches (like [haskell.nix](https://github.com/input-output-hk/haskell.nix), [stacklock2nix](https://github.com/cdepillabout/stacklock2nix)). Later in the blog post series, we'll explore [haskell-flake](https://github.com/srid/haskell-flake) which builds on top of the Haskell infrastructure in nixpkgs
 ## Why Nixify?
 
 Why use Nix to develop a Haskell project rather than something like Stack or GHCup?
 
 - **Instant onboarding**: Projects have READMEs that describe how to setup the development environment but these instructions do not work the same way for 
-every developer and usually takes hours or days to setup. With Nix the setup is instantaneous and reproducible,[^nix] which means any new developer
+every developer and usually takes hours or days to setup. With Nix the setup is instantaneous and reproducible,[^3] which means any new developer
 can get the development environment up and running with one command.
 - **Enhanced productivity**: More time spent on writing Haskell as Nix gives a fully working development environment with `nix develop`.
-- **Multi-platform**: Same configuration generally works on macOS,[^nm] Linux and WSL.
+- **Multi-platform**: Same configuration generally works on macOS,[^4] Linux and WSL.
 
-[^nix]: Considering the packages are available in Nix for the host platform.
-[^nm]: Although macOS doesn't have first-class support in nixpkgs, [it is getting there](https://github.com/NixOS/nixpkgs/issues/116341).
+[^3]: Considering the packages are available in Nix for the host platform.
+[^4]: Although macOS doesn't have first-class support in nixpkgs, [it is getting there](https://github.com/NixOS/nixpkgs/issues/116341).
 
 The rest of this blog post will provide a step-by-step demonstration of how to Nixify the todo-app project.
 
@@ -61,23 +69,23 @@ Tl;dr This is how your `flake.nix` will look:
 ```
 A nix flake such as the one above consumes certain `inputs` and produces certain `outputs`. Let's break down each part of this `flake.nix`:
 
-### Inputs [^1]
+### Inputs [^5]
 
-[^1]: There are two ways to access the attributes of `inputs` within `outputs`:
+[^5]: There are two ways to access the attributes of `inputs` within `outputs`:
       - Adding the attribute as a parameter to `outputs`, like `outputs = { self, <attribute> }`. This allows you to use the `<attribute>` without requiring any prefix. 
       - Bind a variable to all the parameters of `outputs`, like `outputs = inputs@{self, ...}`. This enables you to access any attribute from `inputs` in this fashion: `inputs.<attribute>`.
-[^2]: `nixpkgs-unstable` branch is named as such because of the frequent updates it receives and doesn't imply that it is unsafe.
-[^3]: `self` refers to the final state of attributes in the `outputs`. For example, `self.packages.${system}.default` refers to the attribute after assigning `pkgs.hello` to it.
+[^6]: `nixpkgs-unstable` branch is named as such because of the frequent updates it receives and doesn't imply that it is unsafe.
+[^7]: `self` refers to the final state of attributes in the `outputs`. For example, `self.packages.${system}.default` refers to the attribute after assigning `pkgs.hello` to it.
 
 A flake can reference other flakes, which are specified in the `inputs` attribute. We will use the [URL-like representation](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html#url-like-syntax) to specify our input flakes.
 
-In this example, we will use [GNU hello](https://www.gnu.org/software/hello) package from [`nixpkgs`](https://github.com/NixOS/nixpkgs) flake. Therefore, we'll specify the nixpkgs flake as an input, specifically using its `nixpkgs-unstable`[^2] branch. 
+In this example, we will use [GNU hello](https://www.gnu.org/software/hello) package from [`nixpkgs`](https://github.com/NixOS/nixpkgs) flake. Therefore, we'll specify the nixpkgs flake as an input, specifically using its `nixpkgs-unstable`[^6] branch. 
 
 ### Outputs
 
 The `outputs` attribute of a flake is essentially a Nix function that takes inputs and returns the outputs attribute. 
 
-The inputs argument is an attrset containing `self`[^3] as well as the flake inputs (in our flake, we reference the only input `nixpkgs`). [Refer here](https://nixos.wiki/wiki/Flakes#Output_schema) for a detailed schema of `outputs`. Note that the `nixpkgs` key within the inputs attrset refers to the `outputs` of the `flake.nix` located at `nixpkgs.url`. If `nixpkgs.flake = false` is set, then the parameter will represent the source code. 
+The inputs argument is an attrset containing `self`[^7] as well as the flake inputs (in our flake, we reference the only input `nixpkgs`). [Refer here](https://nixos.wiki/wiki/Flakes#Output_schema) for a detailed schema of `outputs`. Note that the `nixpkgs` key within the inputs attrset refers to the `outputs` of the `flake.nix` located at `nixpkgs.url`. If `nixpkgs.flake = false` is set, then the parameter will represent the source code. 
 
 The body of the function defines the flake outputs. Within the `let` block we define two values -- `system` (set as "aarch64-darwin" in this example, assuming we are on an ARM mac) and `pkgs` (referring to nixpkgs packages for `system`). In our example, `system` is hardcoded to a single system, but [forAllSystems](https://zero-to-nix.com/concepts/flakes#system-specificity) can be used to define packages for an array of systems.
 
@@ -102,7 +110,7 @@ Here are some standard outputs a flake may produce:
 
 #### Visualize the flake outputs
 
-- Run `nix flake show`[^ifd]
+- Run `nix flake show`[^8]
 
 Here's how it will look:
 ```
@@ -116,7 +124,7 @@ Here's how it will look:
     └───aarch64-darwin
         └───default: package 'hello-2.12.1'
 ```
-[^ifd]: Run `nix flake show --allow-import-from-derivation` in the further sections as `callCabal2nix` relies on [IFD](https://nixos.wiki/wiki/Import_From_Derivation)
+[^8]: Run `nix flake show --allow-import-from-derivation` in the further sections as `callCabal2nix` relies on [IFD](https://nixos.wiki/wiki/Import_From_Derivation)
 #### See the flake in action
 [![asciicast](https://asciinema.org/a/591420.svg)](https://asciinema.org/a/591420)
 
