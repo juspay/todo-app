@@ -5,6 +5,11 @@ A simple TODO app in Haskell that provides a persistent way to manage the TODO l
 
 **This app serves as a hello-world to ultimately demonstrate how a Haskell project can benefit from the use of Nix (to be precise, [haskell-flake](https://haskell.flake.page) and [flake-parts](https://flake.parts)).**
 
+## Tutorial
+
+Learn with our blog post series: 
+- [Introduction](https://zero-to-flakes.com/blog/nixify-haskell-project-intro)
+
 ## Prerequisite
 
 - Install Nix<sup>[(*)](https://determinate.systems/posts/determinate-nix-installer)</sup>, enable Flakes (avoid using global installations)
