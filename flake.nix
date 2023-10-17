@@ -2,6 +2,9 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    # It would be nicer if we could follow the `lib` subdir of nixpkgs.
+    # Check this thread for more info: https://discourse.nixos.org/t/follow-a-directory-from-a-input-in-flakes/34256
+    flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, flake-parts }:
