@@ -72,11 +72,6 @@
                         # Load DB dump
                         # TODO: check if schema already exists
                         psql -h "$PWD"/data < db.sql
-                  
-                        # Create configuration file for postgrest
-                        echo "db-uri = \"postgres://authenticator:mysecretpassword@localhost:5432/$(whoami)\"
-                        db-schemas = \"api\"
-                        db-anon-role = \"todo_user\"" > data/db.conf
                       '';
                   };
                 in
