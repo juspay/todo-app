@@ -82,22 +82,6 @@
                 in
                 "${script}/bin/create_db";
             };
-
-            postgrest = {
-              type = "app";
-              program =
-                let
-                  script = pkgs.writeShellApplication {
-                    name = "pg_rest";
-                    runtimeInputs = [ myHaskellPackages.postgrest ];
-                    text =
-                      ''
-                        postgrest ./data/db.conf
-                      '';
-                  };
-                in
-                "${script}/bin/pg_rest";
-            };
           };
 
         };
