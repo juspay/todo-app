@@ -46,11 +46,18 @@
               haskell-language-server
             ];
           };
+          # Following args will be passed to all the import below --
+          # similar to `specialArgs`
+          _module.args = {
+            inherit myHaskellPackages;
+          };
 
           imports = [
             ./nix/services/postgres.nix
+            ./nix/services/postgrest.nix
           ];
-          services.postgres.enable = false;
+          services.postgres.enable = true;
+          services.postgrest.enable = true;
 
           # Define apps that is triggered by `nix run` command. For example,
           # `nix run .#postgres` will run the script for postgres below
