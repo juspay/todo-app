@@ -55,37 +55,24 @@
           imports = [
             ./nix/services/postgres.nix
             ./nix/services/postgrest.nix
+            ./nix/scripts.nix
           ];
           services.postgres.enable = true;
           services.postgrest.enable = true;
+          scripts."createdb" = {
+            text =
+              ''
+                # Create a database of your current user
+                if ! psql -h "$PWD"/data -lqt | cut -d \| -f 1 | grep -qw "$(whoami)"; then
+                  createdb -h "$PWD"/data "$(whoami)"
+                fi
 
-          # Define apps that is triggered by `nix run` command. For example,
-          # `nix run .#postgres` will run the script for postgres below
-          apps = {
-            createdb = {
-              type = "app";
-              program =
-                let
-                  script = pkgs.writeShellApplication {
-                    name = "create_db";
-                    runtimeInputs = [ pkgs.postgresql ];
-                    text =
-                      ''
-                        # Create a database of your current user
-                        if ! psql -h "$PWD"/data -lqt | cut -d \| -f 1 | grep -qw "$(whoami)"; then
-                          createdb -h "$PWD"/data "$(whoami)"
-                        fi
-
-                        # Load DB dump
-                        # TODO: check if schema already exists
-                        psql -h "$PWD"/data < db.sql
-                      '';
-                  };
-                in
-                "${script}/bin/create_db";
-            };
+                # Load DB dump
+                # TODO: check if schema already exists
+                psql -h "$PWD"/data < db.sql
+              '';
+            packages = [ pkgs.postgresql ];
           };
-
         };
     };
 }
