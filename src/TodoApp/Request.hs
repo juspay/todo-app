@@ -24,8 +24,8 @@ import Data.String (IsString (fromString))
 import Data.Text (Text, concat, pack)
 import GHC.Generics (Generic)
 import qualified Network.HTTP.Req as R
-import Text.URI (QueryParam (..), URI, mkQueryKey, mkQueryValue, mkURI)
-import Text.URI.Lens (queryParam, uriQuery)
+import Text.URI (QueryParam (..), RText, RTextLabel (PathPiece), URI, mkPathPiece, mkQueryKey, mkQueryValue, mkURI)
+import Text.URI.Lens (queryParam, uriPath, uriQuery)
 import Prelude hiding (concat)
 
 type TaskId = Int
@@ -71,12 +71,14 @@ complete id host = do
   let payload =
         object ["done" .= ("true" :: String)]
   q <- QueryParam <$> mkQueryKey "id" <*> mkQueryValue (pack $ show id)
-  void $ request (R.ReqBodyJson payload) R.PATCH "/todos" [q] host
+  path <- traverse mkPathPiece ["todos"]
+  void $ request (R.ReqBodyJson payload) R.PATCH path [q] host
 
 -- | Return all the items in the table
 viewAll :: (String, Int) -> IO [Task]
 viewAll host = do
-  res <- request R.NoReqBody R.GET "/todos" [] host
+  path <- traverse mkPathPiece ["todos"]
+  res <- request R.NoReqBody R.GET path [] host
   let v = fromJSON $ fromMaybe (object []) $ decode res
   pure $ case v of
     Aeson.Success a -> a
@@ -85,8 +87,9 @@ viewAll host = do
 -- | Return pending items in the table
 view :: (String, Int) -> IO [Task]
 view host = do
+  path <- traverse mkPathPiece ["todos"]
   q <- QueryParam <$> mkQueryKey "done" <*> mkQueryValue "is.false"
-  res <- request R.NoReqBody R.GET "/todos" [q] host
+  res <- request R.NoReqBody R.GET path [q] host
   let v = fromJSON $ fromMaybe (object []) $ decode res
   pure $ case v of
     Aeson.Success a -> a
@@ -97,20 +100,24 @@ add :: String -> (String, Int) -> IO ()
 add task host = do
   let payload =
         object ["task" .= task]
-  void $ request (R.ReqBodyJson payload) R.POST "/todos" [] host
+  path <- traverse mkPathPiece ["todos"]
+  void $ request (R.ReqBodyJson payload) R.POST path [] host
 
 -- | Delete a TODO item with given id
 delete :: Int -> (String, Int) -> IO ()
 delete id host = do
+  path <- traverse mkPathPiece ["todos"]
   q <- QueryParam <$> mkQueryKey "id" <*> mkQueryValue (pack $ show id)
-  void $ request R.NoReqBody R.DELETE "/todos" [q] host
+  void $ request R.NoReqBody R.DELETE path [q] host
 
 -- | Remove all the TODO items from the table
 reset :: (String, Int) -> IO ()
 reset host = do
-  _ <- request R.NoReqBody R.DELETE "/todos" [] host
+  path <- traverse mkPathPiece ["todos"]
+  _ <- request R.NoReqBody R.DELETE path [] host
   -- Call a SQL function that sets the sequence to start from 1
-  void $ request R.NoReqBody R.POST "/rpc/reset_id" [] host
+  path <- traverse mkPathPiece ["rpc", "reset_id"]
+  void $ request R.NoReqBody R.POST path [] host
 
 data Response = Response
   { message :: ByteString,
@@ -128,14 +135,14 @@ request ::
   ) =>
   body ->
   method ->
-  Text ->
+  [RText 'PathPiece] ->
   [QueryParam] ->
   (String, Int) ->
   m ByteString
-request body method subdir qs (domain, todoPort) =
+request body method paths qs (domain, todoPort) =
   R.runReq R.defaultHttpConfig $ do
-    uri <- mkURI $ concat [pack domain, subdir]
-    let (url, options) = fromJust $ R.useHttpURI $ uri & uriQuery .~ qs
+    uri <- mkURI $ pack domain
+    let (url, options) = fromJust $ R.useHttpURI $ uri & uriQuery .~ qs & uriPath .~ paths
     r <-
       R.req
         method
