@@ -11,6 +11,7 @@ module TodoApp.Request
   )
 where
 
+import Control.Lens ((&), (.~))
 import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Aeson (Result, decode, fromJSON, object, (.=))
@@ -19,10 +20,12 @@ import Data.Aeson.Types (FromJSON)
 import Data.ByteString.Lazy.Internal (ByteString)
 import Data.Kind (Type)
 import Data.Maybe (fromJust, fromMaybe)
+import Data.String (IsString (fromString))
 import Data.Text (Text, concat, pack)
 import GHC.Generics (Generic)
 import qualified Network.HTTP.Req as R
-import Text.URI (mkURI)
+import Text.URI (QueryParam (..), URI, mkQueryKey, mkQueryValue, mkURI)
+import Text.URI.Lens (queryParam, uriQuery)
 import Prelude hiding (concat)
 
 type TaskId = Int
@@ -67,12 +70,13 @@ complete :: Int -> (String, Int) -> IO ()
 complete id host = do
   let payload =
         object ["done" .= ("true" :: String)]
-  void $ request (R.ReqBodyJson payload) R.PATCH "/todos" (concat ["id=eq.", pack $ show id]) host
+  q <- QueryParam <$> mkQueryKey "id" <*> mkQueryValue (pack $ show id)
+  void $ request (R.ReqBodyJson payload) R.PATCH "/todos" [q] host
 
 -- | Return all the items in the table
 viewAll :: (String, Int) -> IO [Task]
 viewAll host = do
-  res <- request R.NoReqBody R.GET "/todos" "" host
+  res <- request R.NoReqBody R.GET "/todos" [] host
   let v = fromJSON $ fromMaybe (object []) $ decode res
   pure $ case v of
     Aeson.Success a -> a
@@ -81,7 +85,8 @@ viewAll host = do
 -- | Return pending items in the table
 view :: (String, Int) -> IO [Task]
 view host = do
-  res <- request R.NoReqBody R.GET "/todos" "done=is.false" host
+  q <- QueryParam <$> mkQueryKey "done" <*> mkQueryValue "is.false"
+  res <- request R.NoReqBody R.GET "/todos" [q] host
   let v = fromJSON $ fromMaybe (object []) $ decode res
   pure $ case v of
     Aeson.Success a -> a
@@ -92,19 +97,20 @@ add :: String -> (String, Int) -> IO ()
 add task host = do
   let payload =
         object ["task" .= task]
-  void $ request (R.ReqBodyJson payload) R.POST "/todos" "" host
+  void $ request (R.ReqBodyJson payload) R.POST "/todos" [] host
 
 -- | Delete a TODO item with given id
 delete :: Int -> (String, Int) -> IO ()
 delete id host = do
-  void $ request R.NoReqBody R.DELETE "/todos" (concat ["id=eq.", pack $ show id]) host
+  q <- QueryParam <$> mkQueryKey "id" <*> mkQueryValue (pack $ show id)
+  void $ request R.NoReqBody R.DELETE "/todos" [q] host
 
 -- | Remove all the TODO items from the table
 reset :: (String, Int) -> IO ()
 reset host = do
-  _ <- request R.NoReqBody R.DELETE "/todos" "" host
+  _ <- request R.NoReqBody R.DELETE "/todos" [] host
   -- Call a SQL function that sets the sequence to start from 1
-  void $ request R.NoReqBody R.POST "/rpc/reset_id" "" host
+  void $ request R.NoReqBody R.POST "/rpc/reset_id" [] host
 
 data Response = Response
   { message :: ByteString,
@@ -123,13 +129,13 @@ request ::
   body ->
   method ->
   Text ->
-  Text ->
+  [QueryParam] ->
   (String, Int) ->
   m ByteString
-request body method subdir filter (domain, todoPort) =
+request body method subdir qs (domain, todoPort) =
   R.runReq R.defaultHttpConfig $ do
-    uri <- mkURI $ concat [pack domain, subdir, "?", filter]
-    let (url, options) = fromJust (R.useHttpURI uri)
+    uri <- mkURI $ concat [pack domain, subdir]
+    let (url, options) = fromJust $ R.useHttpURI $ uri & uriQuery .~ qs
     r <-
       R.req
         method
