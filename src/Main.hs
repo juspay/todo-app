@@ -32,22 +32,22 @@ runApp :: (String, Int) -> Opts -> IO ()
 runApp (domain, todoPort) opts = do
   case optCommand opts of
     Add task -> do
-      status <- TR.add task (domain, todoPort)
+      status <- TR.runRequest (TR.Add task) (domain, todoPort)
       parseStatus status "Task added!"
     Delete id -> do
-      status <- TR.delete id (domain, todoPort)
+      status <- TR.runRequest (TR.Delete id) (domain, todoPort)
       parseStatus status "Task deleted!"
     Done id -> do
-      status <- TR.complete id (domain, todoPort)
+      status <- TR.runRequest (TR.Complete id) (domain, todoPort)
       parseStatus status "Task completed!"
     View -> do
-      todo <- TR.view (domain, todoPort)
+      todo <- TR.runRequest TR.View (domain, todoPort)
       printTasks todo
     ViewAll -> do
-      todo <- TR.viewAll (domain, todoPort)
+      todo <- TR.runRequest TR.ViewAll (domain, todoPort)
       printTasks todo
     Reset -> do
-      status <- TR.reset (domain, todoPort)
+      status <- TR.runRequest TR.Reset (domain, todoPort)
       parseStatus status "Tasks cleared!"
   where
     printTasks :: Result [Task] -> IO ()

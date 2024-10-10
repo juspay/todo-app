@@ -1,5 +1,17 @@
-module TodoApp.Request (complete, viewAll, add, delete, reset, view, Task (..)) where
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE LambdaCase #-}
 
+module TodoApp.Request
+  ( -- * Task type
+    Task (..),
+
+    -- * Interacting with tasks
+    Request (..),
+    runRequest,
+  )
+where
+
+import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Aeson (Result, decode, fromJSON, object, (.=))
 import Data.Aeson.Types (FromJSON)
@@ -12,46 +24,42 @@ import qualified Network.HTTP.Req as R
 import Text.URI (mkURI)
 import Prelude hiding (concat)
 
-data Response = Response
-  { message :: ByteString,
-    responseCode :: Int
-  }
+type TaskId = Int
 
 data Task = Task
-  { id :: Int,
+  { id :: TaskId,
     done :: Bool,
     task :: Text
   }
   deriving stock (Generic, Show, Eq)
   deriving anyclass (FromJSON)
 
--- TODO: Add more comments
+data Request r where
+  -- | Mark a task as complete
+  Complete :: TaskId -> Request Int
+  -- | Return all tasks
+  ViewAll :: Request (Result [Task])
+  -- | Return pending tasks
+  View :: Request (Result [Task])
+  -- | Add a new task
+  Add :: String -> Request TaskId
+  -- | Delete a task
+  Delete :: TaskId -> Request Int
+  -- | Remove all tasks
+  Reset :: Request Int
 
--- | Make a http request to postgrest service
-request ::
-  ( R.HttpBodyAllowed (R.AllowsBody method) (R.ProvidesBody body),
-    MonadIO m,
-    R.HttpMethod method,
-    R.HttpBody body
-  ) =>
-  body ->
-  method ->
-  Text ->
-  Text ->
+runRequest ::
+  (MonadIO m, m ~ IO) =>
+  Request a ->
   (String, Int) ->
-  m Response
-request body method subdir filter (domain, todoPort) =
-  R.runReq R.defaultHttpConfig $ do
-    uri <- mkURI $ concat [pack domain, subdir, "?", filter]
-    let (url, options) = fromJust (R.useHttpURI uri)
-    r <-
-      R.req
-        method
-        url
-        body
-        R.lbsResponse
-        $ R.port todoPort <> options -- options include the query parameters that help in filtering rows of a table
-    return Response {message = R.responseBody r, responseCode = R.responseStatusCode r :: Int}
+  m a
+runRequest = \case
+  Complete id -> complete id
+  ViewAll -> viewAll
+  View -> view
+  Add task -> add task
+  Delete id -> delete id
+  Reset -> reset
 
 -- | Mark the item with id as done
 complete :: Int -> (String, Int) -> IO Int
@@ -94,3 +102,36 @@ reset host = do
   -- Call a SQL function that sets the sequence to start from 1
   res <- request R.NoReqBody R.POST "/rpc/reset_id" "" host
   return $ responseCode res
+
+data Response = Response
+  { message :: ByteString,
+    responseCode :: Int
+  }
+
+-- TODO: Add more comments
+
+-- | Make a http request to postgrest service
+request ::
+  ( R.HttpBodyAllowed (R.AllowsBody method) (R.ProvidesBody body),
+    MonadIO m,
+    R.HttpMethod method,
+    R.HttpBody body
+  ) =>
+  body ->
+  method ->
+  Text ->
+  Text ->
+  (String, Int) ->
+  m Response
+request body method subdir filter (domain, todoPort) =
+  R.runReq R.defaultHttpConfig $ do
+    uri <- mkURI $ concat [pack domain, subdir, "?", filter]
+    let (url, options) = fromJust (R.useHttpURI uri)
+    r <-
+      R.req
+        method
+        url
+        body
+        R.lbsResponse
+        $ R.port todoPort <> options -- options include the query parameters that help in filtering rows of a table
+    return Response {message = R.responseBody r, responseCode = R.responseStatusCode r :: Int}
