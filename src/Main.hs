@@ -4,10 +4,12 @@ import Data.Aeson (Result (..))
 import Data.Maybe (fromMaybe)
 import Data.Semigroup ((<>))
 import qualified Data.Text as DT
+import qualified Data.Text as T
 import Options.Applicative hiding (Success)
 import System.Environment (lookupEnv)
 import Text.PrettyPrint.Boxes hiding ((<>))
 import Text.Read (readMaybe)
+import Text.URI (URI, mkURI)
 import TodoApp.Request (Task)
 import qualified TodoApp.Request as TR
 
@@ -23,48 +25,68 @@ data Command
 
 main :: IO ()
 main = do
-  domain <- fromMaybe "http://localhost" <$> lookupEnv "TODO_DOMAIN"
-  todoPort <- fromMaybe 3000 . (readMaybe =<<) <$> lookupEnv "TODO_PORT"
-  (opts :: Opts) <- execParser optsParser
+  -- URI of the postgrest service
+  uri <- mkURI . T.pack . fromMaybe "http://localhost:3000" =<< lookupEnv "TODO_URI"
+  -- CLI options
+  opts <- execParser optsParser
+  -- Run the app
+  runApp uri opts
+
+runApp :: URI -> Opts -> IO ()
+runApp uri opts = do
   case optCommand opts of
     Add task -> do
-      status <- TR.add task (domain, todoPort)
-      parseStatus status "Task added!"
+      TR.runRequest (TR.Add task) uri
+      putStrLn "Task added!"
     Delete id -> do
-      status <- TR.delete id (domain, todoPort)
-      parseStatus status "Task deleted!"
+      TR.runRequest (TR.Delete id) uri
+      putStrLn "Task deleted!"
     Done id -> do
-      status <- TR.complete id (domain, todoPort)
-      parseStatus status "Task completed!"
+      TR.runRequest (TR.Complete id) uri
+      putStrLn "Task completed!"
     View -> do
-      todo <- TR.view (domain, todoPort)
-      printTasks todo
+      todo <- TR.runRequest TR.View uri
+      mapM_ printTask todo
     ViewAll -> do
-      todo <- TR.viewAll (domain, todoPort)
-      printTasks todo
+      todo <- TR.runRequest TR.ViewAll uri
+      mapM_ printTask todo
     Reset -> do
-      status <- TR.reset (domain, todoPort)
-      parseStatus status "Tasks cleared!"
+      TR.runRequest TR.Reset uri
+      putStrLn "Tasks cleared!"
   where
-    printTasks :: Result [Task] -> IO ()
-    printTasks res = do
-      case res of
-        Success a -> mapM_ printTask a
-        Error b -> putStrLn b
-    parseStatus :: Int -> String -> IO ()
-    parseStatus status message = do
-      let isStatusSuccess = status > 200 && status <= 299
-          error = "Something went wrong!"
-      if isStatusSuccess then putStrLn message else putStrLn error
-
-    optsParser :: ParserInfo Opts
-    optsParser =
-      info
-        (helper <*> versionOption <*> programOptions)
-        ( fullDesc
-            <> header
-              "todo-app - A demo Haskell app showing the use of `flake-parts` to enable various dev workflows"
+    printTask :: TR.Task -> IO ()
+    printTask v = do
+      printBox
+        -- Move the task row to the right by 2 spaces
+        ( moveRight
+            2
+            -- Prints `✓ <id>`
+            (text (getStatusIcon (TR.done v) $ show (TR.id v)))
+            <+>
+            -- Prints task in a box whose width is `width` and
+            -- height depends on the length of the taks message
+            para left width (DT.unpack $ TR.task v)
         )
+      -- Print an extra line to separate two tasks
+      printBox $ text " "
+
+    -- \|Set the width of the box that displays the list of TODO's
+    width :: Int
+    width = 50
+
+    getStatusIcon :: Bool -> String -> String
+    getStatusIcon True _ = "[x] "
+    getStatusIcon False id = "[" ++ id ++ "] "
+
+optsParser :: ParserInfo Opts
+optsParser =
+  info
+    (helper <*> versionOption <*> programOptions)
+    ( fullDesc
+        <> header
+          "todo-app - A demo Haskell app showing the use of `flake-parts` to enable various dev workflows"
+    )
+  where
     versionOption :: Parser (a -> a)
     versionOption = infoOption "0.0" (long "version" <> help "Show version")
     programOptions :: Parser Opts
@@ -114,26 +136,3 @@ main = do
       command
         "reset"
         (info (pure Reset) (progDesc "Clear the TODO list"))
-    -- \|Set the width of the box that displays the list of TODO's
-    width :: Int
-    width = 50
-
-    getStatusIcon :: Bool -> String -> String
-    getStatusIcon True _  = "[x] "
-    getStatusIcon False id = "[" ++ id ++ "] "
-
-    printTask :: TR.Task -> IO ()
-    printTask v = do
-      printBox
-        -- Move the task row to the right by 2 spaces
-        ( moveRight
-            2
-            -- Prints `✓ <id>`
-            (text (getStatusIcon (TR.done v) $ show (TR.id v)))
-            <+>
-            -- Prints task in a box whose width is `width` and
-            -- height depends on the length of the taks message
-            para left width (DT.unpack $ TR.task v)
-        )
-      -- Print an extra line to separate two tasks
-      printBox $ text " "

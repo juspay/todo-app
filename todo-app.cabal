@@ -39,6 +39,7 @@ executable todo-app
     , boxes
     , bytestring
     , http-client
+    , lens
     , modern-uri
     , optparse-applicative
     , req
