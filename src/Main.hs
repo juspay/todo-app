@@ -23,7 +23,7 @@ data Command
 
 main :: IO ()
 main = do
-  domain <- fromMaybe "http://localhost" <$> lookupEnv "TODO_DOMAIN"
+  domain <- fromMaybe "localhost" <$> lookupEnv "TODO_DOMAIN"
   todoPort <- fromMaybe 3000 . (readMaybe =<<) <$> lookupEnv "TODO_PORT"
   opts <- execParser optsParser
   runApp (domain, todoPort) opts

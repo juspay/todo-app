@@ -11,7 +11,7 @@ module TodoApp.Request
   )
 where
 
-import Control.Lens ((&), (.~))
+import Control.Lens ((&), (.~), (?~))
 import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Aeson (Result, decode, fromJSON, object, (.=))
@@ -24,8 +24,8 @@ import Data.String (IsString (fromString))
 import Data.Text (Text, concat, pack)
 import GHC.Generics (Generic)
 import qualified Network.HTTP.Req as R
-import Text.URI (QueryParam (..), RText, RTextLabel (PathPiece), URI, mkPathPiece, mkQueryKey, mkQueryValue, mkURI)
-import Text.URI.Lens (queryParam, uriPath, uriQuery)
+import Text.URI (Authority (Authority), QueryParam (..), RText, RTextLabel (Host, PathPiece), emptyURI, mkHost, mkPathPiece, mkQueryKey, mkQueryValue, mkScheme, mkURI)
+import Text.URI.Lens (queryParam, uriAuthority, uriPath, uriQuery, uriScheme)
 import Prelude hiding (concat)
 
 type TaskId = Int
@@ -119,11 +119,6 @@ reset host = do
   path <- traverse mkPathPiece ["rpc", "reset_id"]
   void $ request R.NoReqBody R.POST path [] host
 
-data Response = Response
-  { message :: ByteString,
-    responseCode :: Int
-  }
-
 -- TODO: Add more comments
 
 -- | Make a http request to postgrest service
@@ -141,15 +136,22 @@ request ::
   m ByteString
 request body method paths qs (domain, todoPort) =
   R.runReq R.defaultHttpConfig $ do
-    uri <- mkURI $ pack domain
-    let (url, options) = fromJust $ R.useHttpURI $ uri & uriQuery .~ qs & uriPath .~ paths
+    host <- mkHost $ pack domain
+    scheme <- mkScheme "http"
+    let uri =
+          emptyURI
+            & uriScheme ?~ scheme
+            & uriAuthority .~ Right (Authority Nothing host (Just $ fromIntegral todoPort))
+            & uriQuery .~ qs
+            & uriPath .~ paths
+    let (url, options) = fromJust $ R.useHttpURI uri
     r <-
       R.req
         method
         url
         body
         R.lbsResponse
-        $ R.port todoPort <> options -- options include the query parameters that help in filtering rows of a table
+        options -- options include the query parameters that help in filtering rows of a table
     let responseCode = R.responseStatusCode r :: Int
     if responseCode >= 200 && responseCode < 300
       then return $ R.responseBody r
