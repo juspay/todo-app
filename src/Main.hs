@@ -25,7 +25,11 @@ main :: IO ()
 main = do
   domain <- fromMaybe "http://localhost" <$> lookupEnv "TODO_DOMAIN"
   todoPort <- fromMaybe 3000 . (readMaybe =<<) <$> lookupEnv "TODO_PORT"
-  (opts :: Opts) <- execParser optsParser
+  opts <- execParser optsParser
+  runApp (domain, todoPort) opts
+
+runApp :: (String, Int) -> Opts -> IO ()
+runApp (domain, todoPort) opts = do
   case optCommand opts of
     Add task -> do
       status <- TR.add task (domain, todoPort)
@@ -51,20 +55,46 @@ main = do
       case res of
         Success a -> mapM_ printTask a
         Error b -> putStrLn b
+
     parseStatus :: Int -> String -> IO ()
     parseStatus status message = do
       let isStatusSuccess = status > 200 && status <= 299
           error = "Something went wrong!"
       if isStatusSuccess then putStrLn message else putStrLn error
 
-    optsParser :: ParserInfo Opts
-    optsParser =
-      info
-        (helper <*> versionOption <*> programOptions)
-        ( fullDesc
-            <> header
-              "todo-app - A demo Haskell app showing the use of `flake-parts` to enable various dev workflows"
+    printTask :: TR.Task -> IO ()
+    printTask v = do
+      printBox
+        -- Move the task row to the right by 2 spaces
+        ( moveRight
+            2
+            -- Prints `✓ <id>`
+            (text (getStatusIcon (TR.done v) $ show (TR.id v)))
+            <+>
+            -- Prints task in a box whose width is `width` and
+            -- height depends on the length of the taks message
+            para left width (DT.unpack $ TR.task v)
         )
+      -- Print an extra line to separate two tasks
+      printBox $ text " "
+
+    -- \|Set the width of the box that displays the list of TODO's
+    width :: Int
+    width = 50
+
+    getStatusIcon :: Bool -> String -> String
+    getStatusIcon True _ = "[x] "
+    getStatusIcon False id = "[" ++ id ++ "] "
+
+optsParser :: ParserInfo Opts
+optsParser =
+  info
+    (helper <*> versionOption <*> programOptions)
+    ( fullDesc
+        <> header
+          "todo-app - A demo Haskell app showing the use of `flake-parts` to enable various dev workflows"
+    )
+  where
     versionOption :: Parser (a -> a)
     versionOption = infoOption "0.0" (long "version" <> help "Show version")
     programOptions :: Parser Opts
@@ -114,26 +144,3 @@ main = do
       command
         "reset"
         (info (pure Reset) (progDesc "Clear the TODO list"))
-    -- \|Set the width of the box that displays the list of TODO's
-    width :: Int
-    width = 50
-
-    getStatusIcon :: Bool -> String -> String
-    getStatusIcon True _  = "[x] "
-    getStatusIcon False id = "[" ++ id ++ "] "
-
-    printTask :: TR.Task -> IO ()
-    printTask v = do
-      printBox
-        -- Move the task row to the right by 2 spaces
-        ( moveRight
-            2
-            -- Prints `✓ <id>`
-            (text (getStatusIcon (TR.done v) $ show (TR.id v)))
-            <+>
-            -- Prints task in a box whose width is `width` and
-            -- height depends on the length of the taks message
-            para left width (DT.unpack $ TR.task v)
-        )
-      -- Print an extra line to separate two tasks
-      printBox $ text " "
