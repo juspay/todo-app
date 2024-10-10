@@ -14,6 +14,7 @@ where
 import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Aeson (Result, decode, fromJSON, object, (.=))
+import qualified Data.Aeson as Aeson
 import Data.Aeson.Types (FromJSON)
 import Data.ByteString.Lazy.Internal (ByteString)
 import Data.Kind (Type)
@@ -36,17 +37,17 @@ data Task = Task
 
 data Request r where
   -- | Mark a task as complete
-  Complete :: TaskId -> Request Int
+  Complete :: TaskId -> Request ()
   -- | Return all tasks
-  ViewAll :: Request (Result [Task])
+  ViewAll :: Request [Task]
   -- | Return pending tasks
-  View :: Request (Result [Task])
+  View :: Request [Task]
   -- | Add a new task
-  Add :: String -> Request TaskId
+  Add :: String -> Request ()
   -- | Delete a task
-  Delete :: TaskId -> Request Int
+  Delete :: TaskId -> Request ()
   -- | Remove all tasks
-  Reset :: Request Int
+  Reset :: Request ()
 
 runRequest ::
   (MonadIO m, m ~ IO) =>
@@ -62,46 +63,48 @@ runRequest = \case
   Reset -> reset
 
 -- | Mark the item with id as done
-complete :: Int -> (String, Int) -> IO Int
+complete :: Int -> (String, Int) -> IO ()
 complete id host = do
   let payload =
         object ["done" .= ("true" :: String)]
-  res <- request (R.ReqBodyJson payload) R.PATCH "/todos" (concat ["id=eq.", pack $ show id]) host
-  return $ responseCode res
+  void $ request (R.ReqBodyJson payload) R.PATCH "/todos" (concat ["id=eq.", pack $ show id]) host
 
 -- | Return all the items in the table
-viewAll :: (String, Int) -> IO (Result [Task])
+viewAll :: (String, Int) -> IO [Task]
 viewAll host = do
   res <- request R.NoReqBody R.GET "/todos" "" host
-  return $ fromJSON $ fromMaybe (object []) $ decode $ message res
+  let v = fromJSON $ fromMaybe (object []) $ decode res
+  pure $ case v of
+    Aeson.Success a -> a
+    Aeson.Error e -> error e
 
 -- | Return pending items in the table
-view :: (String, Int) -> IO (Result [Task])
+view :: (String, Int) -> IO [Task]
 view host = do
   res <- request R.NoReqBody R.GET "/todos" "done=is.false" host
-  return $ fromJSON $ fromMaybe (object []) $ decode $ message res
+  let v = fromJSON $ fromMaybe (object []) $ decode res
+  pure $ case v of
+    Aeson.Success a -> a
+    Aeson.Error e -> error e
 
 -- | Add a new task to the table
-add :: String -> (String, Int) -> IO Int
+add :: String -> (String, Int) -> IO ()
 add task host = do
   let payload =
         object ["task" .= task]
-  res <- request (R.ReqBodyJson payload) R.POST "/todos" "" host
-  return $ responseCode res
+  void $ request (R.ReqBodyJson payload) R.POST "/todos" "" host
 
 -- | Delete a TODO item with given id
-delete :: Int -> (String, Int) -> IO Int
+delete :: Int -> (String, Int) -> IO ()
 delete id host = do
-  res <- request R.NoReqBody R.DELETE "/todos" (concat ["id=eq.", pack $ show id]) host
-  return $ responseCode res
+  void $ request R.NoReqBody R.DELETE "/todos" (concat ["id=eq.", pack $ show id]) host
 
 -- | Remove all the TODO items from the table
-reset :: (String, Int) -> IO Int
+reset :: (String, Int) -> IO ()
 reset host = do
   _ <- request R.NoReqBody R.DELETE "/todos" "" host
   -- Call a SQL function that sets the sequence to start from 1
-  res <- request R.NoReqBody R.POST "/rpc/reset_id" "" host
-  return $ responseCode res
+  void $ request R.NoReqBody R.POST "/rpc/reset_id" "" host
 
 data Response = Response
   { message :: ByteString,
@@ -122,7 +125,7 @@ request ::
   Text ->
   Text ->
   (String, Int) ->
-  m Response
+  m ByteString
 request body method subdir filter (domain, todoPort) =
   R.runReq R.defaultHttpConfig $ do
     uri <- mkURI $ concat [pack domain, subdir, "?", filter]
@@ -134,4 +137,7 @@ request body method subdir filter (domain, todoPort) =
         body
         R.lbsResponse
         $ R.port todoPort <> options -- options include the query parameters that help in filtering rows of a table
-    return Response {message = R.responseBody r, responseCode = R.responseStatusCode r :: Int}
+    let responseCode = R.responseStatusCode r :: Int
+    if responseCode >= 200 && responseCode < 300
+      then return $ R.responseBody r
+      else error "Request failed"

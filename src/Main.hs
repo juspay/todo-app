@@ -32,36 +32,24 @@ runApp :: (String, Int) -> Opts -> IO ()
 runApp (domain, todoPort) opts = do
   case optCommand opts of
     Add task -> do
-      status <- TR.runRequest (TR.Add task) (domain, todoPort)
-      parseStatus status "Task added!"
+      TR.runRequest (TR.Add task) (domain, todoPort)
+      putStrLn "Task added!"
     Delete id -> do
-      status <- TR.runRequest (TR.Delete id) (domain, todoPort)
-      parseStatus status "Task deleted!"
+      TR.runRequest (TR.Delete id) (domain, todoPort)
+      putStrLn "Task deleted!"
     Done id -> do
-      status <- TR.runRequest (TR.Complete id) (domain, todoPort)
-      parseStatus status "Task completed!"
+      TR.runRequest (TR.Complete id) (domain, todoPort)
+      putStrLn "Task completed!"
     View -> do
       todo <- TR.runRequest TR.View (domain, todoPort)
-      printTasks todo
+      mapM_ printTask todo
     ViewAll -> do
       todo <- TR.runRequest TR.ViewAll (domain, todoPort)
-      printTasks todo
+      mapM_ printTask todo
     Reset -> do
-      status <- TR.runRequest TR.Reset (domain, todoPort)
-      parseStatus status "Tasks cleared!"
+      TR.runRequest TR.Reset (domain, todoPort)
+      putStrLn "Tasks cleared!"
   where
-    printTasks :: Result [Task] -> IO ()
-    printTasks res = do
-      case res of
-        Success a -> mapM_ printTask a
-        Error b -> putStrLn b
-
-    parseStatus :: Int -> String -> IO ()
-    parseStatus status message = do
-      let isStatusSuccess = status > 200 && status <= 299
-          error = "Something went wrong!"
-      if isStatusSuccess then putStrLn message else putStrLn error
-
     printTask :: TR.Task -> IO ()
     printTask v = do
       printBox
