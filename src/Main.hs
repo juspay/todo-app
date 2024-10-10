@@ -4,10 +4,12 @@ import Data.Aeson (Result (..))
 import Data.Maybe (fromMaybe)
 import Data.Semigroup ((<>))
 import qualified Data.Text as DT
+import qualified Data.Text as T
 import Options.Applicative hiding (Success)
 import System.Environment (lookupEnv)
 import Text.PrettyPrint.Boxes hiding ((<>))
 import Text.Read (readMaybe)
+import Text.URI (URI, mkURI)
 import TodoApp.Request (Task)
 import qualified TodoApp.Request as TR
 
@@ -23,31 +25,33 @@ data Command
 
 main :: IO ()
 main = do
-  domain <- fromMaybe "localhost" <$> lookupEnv "TODO_DOMAIN"
-  todoPort <- fromMaybe 3000 . (readMaybe =<<) <$> lookupEnv "TODO_PORT"
+  -- URI of the postgrest service
+  uri <- mkURI . T.pack . fromMaybe "http://localhost:3000" =<< lookupEnv "TODO_URI"
+  -- CLI options
   opts <- execParser optsParser
-  runApp (domain, todoPort) opts
+  -- Run the app
+  runApp uri opts
 
-runApp :: (String, Int) -> Opts -> IO ()
-runApp (domain, todoPort) opts = do
+runApp :: URI -> Opts -> IO ()
+runApp uri opts = do
   case optCommand opts of
     Add task -> do
-      TR.runRequest (TR.Add task) (domain, todoPort)
+      TR.runRequest (TR.Add task) uri
       putStrLn "Task added!"
     Delete id -> do
-      TR.runRequest (TR.Delete id) (domain, todoPort)
+      TR.runRequest (TR.Delete id) uri
       putStrLn "Task deleted!"
     Done id -> do
-      TR.runRequest (TR.Complete id) (domain, todoPort)
+      TR.runRequest (TR.Complete id) uri
       putStrLn "Task completed!"
     View -> do
-      todo <- TR.runRequest TR.View (domain, todoPort)
+      todo <- TR.runRequest TR.View uri
       mapM_ printTask todo
     ViewAll -> do
-      todo <- TR.runRequest TR.ViewAll (domain, todoPort)
+      todo <- TR.runRequest TR.ViewAll uri
       mapM_ printTask todo
     Reset -> do
-      TR.runRequest TR.Reset (domain, todoPort)
+      TR.runRequest TR.Reset uri
       putStrLn "Tasks cleared!"
   where
     printTask :: TR.Task -> IO ()

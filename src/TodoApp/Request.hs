@@ -24,7 +24,7 @@ import Data.String (IsString (fromString))
 import Data.Text (Text, concat, pack)
 import GHC.Generics (Generic)
 import qualified Network.HTTP.Req as R
-import Text.URI (Authority (Authority), QueryParam (..), RText, RTextLabel (Host, PathPiece), emptyURI, mkHost, mkPathPiece, mkQueryKey, mkQueryValue, mkScheme, mkURI)
+import Text.URI (Authority (Authority), QueryParam (..), RText, RTextLabel (Host, PathPiece), URI, emptyURI, mkHost, mkPathPiece, mkQueryKey, mkQueryValue, mkScheme, mkURI)
 import Text.URI.Lens (queryParam, uriAuthority, uriPath, uriQuery, uriScheme)
 import Prelude hiding (concat)
 
@@ -55,7 +55,7 @@ data Request r where
 runRequest ::
   (MonadIO m, m ~ IO) =>
   Request a ->
-  (String, Int) ->
+  URI ->
   m a
 runRequest = \case
   Complete id -> complete id
@@ -66,7 +66,7 @@ runRequest = \case
   Reset -> reset
 
 -- | Mark the item with id as done
-complete :: Int -> (String, Int) -> IO ()
+complete :: Int -> URI -> IO ()
 complete id host = do
   let payload =
         object ["done" .= ("true" :: String)]
@@ -75,7 +75,7 @@ complete id host = do
   void $ request (R.ReqBodyJson payload) R.PATCH path [q] host
 
 -- | Return all the items in the table
-viewAll :: (String, Int) -> IO [Task]
+viewAll :: URI -> IO [Task]
 viewAll host = do
   path <- traverse mkPathPiece ["todos"]
   res <- request R.NoReqBody R.GET path [] host
@@ -85,7 +85,7 @@ viewAll host = do
     Aeson.Error e -> error e
 
 -- | Return pending items in the table
-view :: (String, Int) -> IO [Task]
+view :: URI -> IO [Task]
 view host = do
   path <- traverse mkPathPiece ["todos"]
   q <- QueryParam <$> mkQueryKey "done" <*> mkQueryValue "is.false"
@@ -96,7 +96,7 @@ view host = do
     Aeson.Error e -> error e
 
 -- | Add a new task to the table
-add :: String -> (String, Int) -> IO ()
+add :: String -> URI -> IO ()
 add task host = do
   let payload =
         object ["task" .= task]
@@ -104,14 +104,14 @@ add task host = do
   void $ request (R.ReqBodyJson payload) R.POST path [] host
 
 -- | Delete a TODO item with given id
-delete :: Int -> (String, Int) -> IO ()
+delete :: Int -> URI -> IO ()
 delete id host = do
   path <- traverse mkPathPiece ["todos"]
   q <- QueryParam <$> mkQueryKey "id" <*> mkQueryValue (pack $ show id)
   void $ request R.NoReqBody R.DELETE path [q] host
 
 -- | Remove all the TODO items from the table
-reset :: (String, Int) -> IO ()
+reset :: URI -> IO ()
 reset host = do
   path <- traverse mkPathPiece ["todos"]
   _ <- request R.NoReqBody R.DELETE path [] host
@@ -132,16 +132,12 @@ request ::
   method ->
   [RText 'PathPiece] ->
   [QueryParam] ->
-  (String, Int) ->
+  URI ->
   m ByteString
-request body method paths qs (domain, todoPort) =
+request body method paths qs postgrestUri =
   R.runReq R.defaultHttpConfig $ do
-    host <- mkHost $ pack domain
-    scheme <- mkScheme "http"
     let uri =
-          emptyURI
-            & uriScheme ?~ scheme
-            & uriAuthority .~ Right (Authority Nothing host (Just $ fromIntegral todoPort))
+          postgrestUri
             & uriQuery .~ qs
             & uriPath .~ paths
     let (url, options) = fromJust $ R.useHttpURI uri
