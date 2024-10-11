@@ -10,9 +10,11 @@ A simple TODO app in Haskell that provides a persistent way to manage the TODO l
 
 ## Tutorial
 
-Learn with our blog post series:
+Learn with [our blog post series](https://nixos.asia/en/nixify-haskell):
 
 - [Introduction](https://nixos.asia/en/nixify-haskell-nixpkgs)
+- [Switch to flake-parts](https://nixos.asia/en/nixify-haskell-parts)
+- ...
 
 ## Prerequisite
 
