@@ -21,9 +21,17 @@
           myHaskellPackages = pkgs.haskellPackages.extend overlay;
         in
         {
+          imports = [
+            ./nix/services/postgres.nix
+            ./nix/services/postgrest.nix
+            ./nix/scripts.nix
+          ];
+
           # This is what generates the todo-app executable
-          packages.todo-app = myHaskellPackages.todo-app;
-          packages.default = myHaskellPackages.todo-app;
+          packages = {
+            todo-app = myHaskellPackages.todo-app;
+            default = myHaskellPackages.todo-app;
+          };
 
           # Define what your shell using `nix develop` should comprise of
           devShells.default = myHaskellPackages.shellFor {
@@ -44,14 +52,12 @@
             ];
           };
 
-          imports = [
-            ./nix/services/postgres.nix
-            ./nix/services/postgrest.nix
-            ./nix/scripts.nix
-          ];
-          services.postgres.enable = true;
-          services.postgrest.enable = true;
+          services = {
+            postgres.enable = true;
+            postgrest.enable = true;
+          };
           scripts."createdb" = {
+            packages = [ pkgs.postgresql ];
             text =
               ''
                 # Create a database of your current user
@@ -63,7 +69,6 @@
                 # TODO: check if schema already exists
                 psql -h "$PWD"/data < db.sql
               '';
-            packages = [ pkgs.postgresql ];
           };
         };
     };
