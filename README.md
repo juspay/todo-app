@@ -14,6 +14,7 @@ Learn with [our blog post series](https://nixos.asia/en/nixify-haskell):
 
 - [Introduction](https://nixos.asia/en/nixify-haskell-nixpkgs)
 - [Switch to flake-parts](https://nixos.asia/en/nixify-haskell-parts)
+- [Simplify Nix using haskell-flake](https://nixos.asia/en/nixify-haskell-flake)
 - ...
 
 ## Prerequisite
