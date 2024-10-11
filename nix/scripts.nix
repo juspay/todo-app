@@ -27,22 +27,19 @@
   };
   config = {
     apps =
-      let
-        scripts' = lib.mapAttrs
-          (name: cfg: {
-            type = "app";
-            program =
-              let
-                script = pkgs.writeShellApplication {
-                  name = name;
-                  text = cfg.text;
-                  runtimeInputs = cfg.packages;
-                };
-              in
-              "${script}/bin/${name}";
-          })
-          config.scripts;
-      in
-      scripts';
+      lib.mapAttrs
+        (name: cfg: {
+          type = "app";
+          program =
+            let
+              script = pkgs.writeShellApplication {
+                name = name;
+                text = cfg.text;
+                runtimeInputs = cfg.packages;
+              };
+            in
+            "${script}/bin/${name}";
+        })
+        config.scripts;
   };
 }
