@@ -16,7 +16,6 @@
           };
           text = lib.mkOption {
             type = lib.types.str;
-            default = "";
             description = ''
               The bash script to execute.
             '';
