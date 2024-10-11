@@ -2,17 +2,24 @@
 {
   options = {
     scripts = lib.mkOption {
+      description = ''
+        A set of scripts to define as flake apps.
+      '';
       type = lib.types.attrsOf (lib.types.submodule {
         options = {
           packages = lib.mkOption {
             type = lib.types.listOf lib.types.package;
             default = [ ];
-            description = "The packages to include as runtime dependencies.";
+            description = ''
+              Dependencies of the script.
+            '';
           };
           text = lib.mkOption {
             type = lib.types.str;
             default = "";
-            description = "The script to run.";
+            description = ''
+              The bash script to execute.
+            '';
           };
         };
       });
