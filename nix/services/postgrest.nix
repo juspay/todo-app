@@ -1,4 +1,4 @@
-{ pkgs, lib, config, myHaskellPackages, ... }:
+{ pkgs, lib, config, ... }:
 {
   options = {
     services.postgrest = {
@@ -20,7 +20,7 @@
         let
           script = pkgs.writeShellApplication {
             name = "pg_rest";
-            runtimeInputs = [ myHaskellPackages.postgrest ];
+            runtimeInputs = [ pkgs.haskellPackages.postgrest ];
             text =
               ''
                 PGRST_DB_URI="${config.services.postgrest.config.db-uri}";

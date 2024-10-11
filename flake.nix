@@ -2,9 +2,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    # It would be nicer if we could follow the `lib` subdir of nixpkgs.
-    # Check this thread for more info: https://discourse.nixos.org/t/follow-a-directory-from-a-input-in-flakes/34256
-    flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
   };
 
   outputs = inputs:
@@ -28,28 +25,23 @@
           packages.todo-app = myHaskellPackages.todo-app;
           packages.default = myHaskellPackages.todo-app;
 
-          # Define what your shell using `nix develop` should comprise of 
+          # Define what your shell using `nix develop` should comprise of
           devShells.default = myHaskellPackages.shellFor {
             packages = p: [
               # If this is not specified, `cabal build` in devShell will not
               # be able to utilise the derivation built using callCabal2nix.
               # In such a case `cabal build` will try to build the pacakge
-              # from scratch, including downloading dependencies. It will 
+              # from scratch, including downloading dependencies. It will
               # eventually fail because it can't find `zlib`.
               p.todo-app
             ];
-            # These packages will be installed and their `/bin` path is 
+            # These packages will be installed and their `/bin` path is
             # added to PATH env of the devShell
             buildInputs = with myHaskellPackages; [
               cabal-install
               ghcid
               haskell-language-server
             ];
-          };
-          # Following args will be passed to all the import below --
-          # similar to `specialArgs`
-          _module.args = {
-            inherit myHaskellPackages;
           };
 
           imports = [
