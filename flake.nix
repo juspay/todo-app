@@ -19,29 +19,18 @@
       imports = [
         # This is where we import the haskell-flake module. See ./nix/todo-app.nix for how we use it.
         inputs.haskell-flake.flakeModule
-        # See ./nix/services/default.nix for how we use it in `perSystem`
+        # See ./nix/process-compose.nix for how we use it.
         inputs.process-compose-flake.flakeModule
+        ./nix/process-compose.nix
+        # This is where we override `nixpkgs` to use `process-compose` from `nixpkgs-latest`.
+        ./nix/nixpkgs.nix
       ];
       perSystem = { inputs', self', pkgs, system, ... }: {
-        _module.args.pkgs = import inputs.nixpkgs {
-          inherit system;
-          overlays = [
-            (_: _: {
-              inherit (inputs'.nixpkgs-latest.legacyPackages) process-compose;
-            })
-          ];
-        };
         imports = [
           ./nix/todo-app.nix
           ./nix/devshell.nix
           ./nix/integration-test.nix
         ];
-        process-compose.services = {
-          imports = [
-            inputs.services-flake.processComposeModules.default
-            ./nix/services
-          ];
-        };
       };
     };
 }
