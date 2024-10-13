@@ -25,7 +25,7 @@
         # This is where we override `nixpkgs` to use `process-compose` from `nixpkgs-latest`.
         ./nix/nixpkgs.nix
       ];
-      perSystem = { inputs', self', pkgs, system, ... }: {
+      perSystem = { self', pkgs, ... }: {
         imports = [
           ./nix/todo-app.nix
           ./nix/devshell.nix
