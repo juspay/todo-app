@@ -25,11 +25,7 @@ data Command
 
 main :: IO ()
 main = do
-  -- Connection to the postgrest service
-  conn <- maybe
-    (TR.TCP <$> (mkURI . T.pack . fromMaybe "http://localhost:3000" =<< lookupEnv "TODO_URI"))
-    (pure . TR.UnixSocket)
-    =<< lookupEnv "PGRST_SERVER_UNIX_SOCKET"
+  conn <- getConnection
   -- CLI options
   opts <- execParser optsParser
   -- Run the app
@@ -80,6 +76,18 @@ runApp conn opts = do
     getStatusIcon :: Bool -> String -> String
     getStatusIcon True _ = "[x] "
     getStatusIcon False id = "[" ++ id ++ "] "
+
+-- | Get `TR.Connection` to connect to the postgrest service
+getConnection :: IO TR.Connection
+getConnection = do
+  unixSocketPath <- lookupEnv "PGRST_SERVER_UNIX_SOCKET"
+  case unixSocketPath of
+    Just path -> pure $ TR.UnixSocket path
+    Nothing -> do
+      todoUri <- lookupEnv "TODO_URI"
+      let defaultUri = "http://localhost:3000"
+      let uri = fromMaybe defaultUri todoUri
+      TR.TCP <$> mkURI (T.pack uri)
 
 optsParser :: ParserInfo Opts
 optsParser =
