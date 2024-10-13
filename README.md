@@ -20,7 +20,6 @@ Learn with [our blog post series](https://nixos.asia/en/nixify-haskell):
 ## Prerequisite
 
 - [Install Nix](https://nixos.asia/en/install)
-- Stop any global postgres server running on port 5432.
 - Run application services
   - Run `nix run .#postgres` to start a postgres server with data dir in `./data/db`.
     - Run (once) `nix run .#createdb` to create DB user, load the dump and create the DB configuration for PostgREST.

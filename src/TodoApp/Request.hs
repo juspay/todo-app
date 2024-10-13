@@ -8,6 +8,7 @@ module TodoApp.Request
     -- * Interacting with tasks
     Request (..),
     runRequest,
+    Connection (..),
   )
 where
 
@@ -27,6 +28,8 @@ import qualified Network.HTTP.Req as R
 import Text.URI (Authority (Authority), QueryParam (..), RText, RTextLabel (Host, PathPiece), URI, emptyURI, mkHost, mkPathPiece, mkQueryKey, mkQueryValue, mkScheme, mkURI)
 import Text.URI.Lens (queryParam, uriAuthority, uriPath, uriQuery, uriScheme)
 import Prelude hiding (concat)
+import qualified Network.HTTP.Client as HC
+import qualified Network.Socket as NS
 
 type TaskId = Int
 
@@ -52,79 +55,90 @@ data Request r where
   -- | Remove all tasks
   Reset :: Request ()
 
+data Connection
+  = TCP URI
+  | UnixSocket FilePath
+
+createUnixSocketManager :: FilePath -> IO HC.Manager
+createUnixSocketManager socketPath = HC.newManager $ HC.defaultManagerSettings
+  { HC.managerRawConnection = return $ \_ _ _ -> do
+      sock <- NS.socket NS.AF_UNIX NS.Stream NS.defaultProtocol
+      NS.connect sock (NS.SockAddrUnix socketPath)
+      HC.socketConnection sock 8192
+  }
+
 runRequest ::
   (MonadIO m, m ~ IO) =>
+  Connection ->
   Request a ->
-  URI ->
   m a
-runRequest = \case
-  Complete id -> complete id
-  ViewAll -> viewAll
-  View -> view
-  Add task -> add task
-  Delete id -> delete id
-  Reset -> reset
+runRequest conn = \case
+  Complete id -> complete id conn
+  ViewAll -> viewAll conn
+  View -> view conn
+  Add task -> add task conn
+  Delete id -> delete id conn
+  Reset -> reset conn
 
 -- | Mark the item with id as done
-complete :: Int -> URI -> IO ()
-complete id host = do
+complete :: Int -> Connection -> IO ()
+complete id conn = do
   let payload =
         object ["done" .= ("true" :: String)]
   q <- QueryParam <$> mkQueryKey "id" <*> mkQueryValue ("eq." <> pack (show id))
   path <- traverse mkPathPiece ["todos"]
-  void $ request (R.ReqBodyJson payload) R.PATCH path [q] host
+  void $ request (R.ReqBodyJson payload) R.PATCH path [q] conn
 
 -- | Return all the items in the table
-viewAll :: URI -> IO [Task]
-viewAll host = do
+viewAll :: Connection -> IO [Task]
+viewAll conn = do
   path <- traverse mkPathPiece ["todos"]
-  res <- request R.NoReqBody R.GET path [] host
+  res <- request R.NoReqBody R.GET path [] conn
   let v = fromJSON $ fromMaybe (object []) $ decode res
   pure $ case v of
     Aeson.Success a -> a
     Aeson.Error e -> error e
 
 -- | Return pending items in the table
-view :: URI -> IO [Task]
-view host = do
+view :: Connection -> IO [Task]
+view conn = do
   path <- traverse mkPathPiece ["todos"]
   q <- QueryParam <$> mkQueryKey "done" <*> mkQueryValue "is.false"
-  res <- request R.NoReqBody R.GET path [q] host
+  res <- request R.NoReqBody R.GET path [q] conn
   let v = fromJSON $ fromMaybe (object []) $ decode res
   pure $ case v of
     Aeson.Success a -> a
     Aeson.Error e -> error e
 
 -- | Add a new task to the table
-add :: String -> URI -> IO ()
-add task host = do
+add :: String -> Connection -> IO ()
+add task conn = do
   let payload =
         object ["task" .= task]
   path <- traverse mkPathPiece ["todos"]
-  void $ request (R.ReqBodyJson payload) R.POST path [] host
+  void $ request (R.ReqBodyJson payload) R.POST path [] conn
 
 -- | Delete a TODO item with given id
-delete :: Int -> URI -> IO ()
-delete id host = do
+delete :: Int -> Connection -> IO ()
+delete id conn = do
   path <- traverse mkPathPiece ["todos"]
   q <- QueryParam <$> mkQueryKey "id" <*> mkQueryValue ("eq." <> pack (show id))
-  void $ request R.NoReqBody R.DELETE path [q] host
+  void $ request R.NoReqBody R.DELETE path [q] conn
 
 -- | Remove all the TODO items from the table
-reset :: URI -> IO ()
-reset host = do
+reset :: Connection -> IO ()
+reset conn = do
   path <- traverse mkPathPiece ["todos"]
-  _ <- request R.NoReqBody R.DELETE path [] host
+  _ <- request R.NoReqBody R.DELETE path [] conn
   -- Call a SQL function that sets the sequence to start from 1
   path <- traverse mkPathPiece ["rpc", "reset_id"]
-  void $ request R.NoReqBody R.POST path [] host
+  void $ request R.NoReqBody R.POST path [] conn
 
 -- TODO: Add more comments
 
 -- | Make a http request to postgrest service
 request ::
   ( R.HttpBodyAllowed (R.AllowsBody method) (R.ProvidesBody body),
-    MonadIO m,
     R.HttpMethod method,
     R.HttpBody body
   ) =>
@@ -132,14 +146,15 @@ request ::
   method ->
   [RText 'PathPiece] ->
   [QueryParam] ->
-  URI ->
-  m ByteString
-request body method paths qs postgrestUri =
-  R.runReq R.defaultHttpConfig $ do
-    let uri =
-          postgrestUri
-            & uriQuery .~ qs
-            & uriPath .~ paths
+  Connection ->
+  IO ByteString
+request body method paths qs conn = do
+  httpConfig <- getHttpConfig conn
+  R.runReq httpConfig $ do
+    let uri = 
+          getURI conn
+          & uriQuery .~ qs
+          & uriPath .~ paths
     let (url, options) = fromJust $ R.useHttpURI uri
     r <-
       R.req
@@ -152,3 +167,17 @@ request body method paths qs postgrestUri =
     if responseCode >= 200 && responseCode < 300
       then return $ R.responseBody r
       else error "Request failed"
+
+-- | Get the HTTP config given `Connection`
+getHttpConfig :: Connection -> IO R.HttpConfig
+getHttpConfig (TCP _) = pure R.defaultHttpConfig
+getHttpConfig (UnixSocket socketPath) = do
+    socketManager <- createUnixSocketManager socketPath
+    pure $ R.defaultHttpConfig { R.httpConfigAltManager = Just socketManager }
+
+-- | Get the URI of the postgrest service given `Connection`
+getURI :: Connection -> URI
+getURI (TCP u) = u
+-- Even though the connection is over unix socket, `req` expects a URL-like string,
+-- so we use a dummy hostname.
+getURI (UnixSocket _) = fromJust $ mkURI "http://localhost"

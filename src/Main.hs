@@ -25,33 +25,32 @@ data Command
 
 main :: IO ()
 main = do
-  -- URI of the postgrest service
-  uri <- mkURI . T.pack . fromMaybe "http://localhost:3000" =<< lookupEnv "TODO_URI"
+  conn <- getConnection
   -- CLI options
   opts <- execParser optsParser
   -- Run the app
-  runApp uri opts
+  runApp conn opts
 
-runApp :: URI -> Opts -> IO ()
-runApp uri opts = do
+runApp :: TR.Connection -> Opts -> IO ()
+runApp conn opts = do
   case optCommand opts of
     Add task -> do
-      TR.runRequest (TR.Add task) uri
+      TR.runRequest conn (TR.Add task)
       putStrLn "Task added!"
     Delete id -> do
-      TR.runRequest (TR.Delete id) uri
+      TR.runRequest conn (TR.Delete id)
       putStrLn "Task deleted!"
     Done id -> do
-      TR.runRequest (TR.Complete id) uri
+      TR.runRequest conn (TR.Complete id)
       putStrLn "Task completed!"
     View -> do
-      todo <- TR.runRequest TR.View uri
+      todo <- TR.runRequest conn TR.View
       mapM_ printTask todo
     ViewAll -> do
-      todo <- TR.runRequest TR.ViewAll uri
+      todo <- TR.runRequest conn TR.ViewAll
       mapM_ printTask todo
     Reset -> do
-      TR.runRequest TR.Reset uri
+      TR.runRequest conn TR.Reset
       putStrLn "Tasks cleared!"
   where
     printTask :: TR.Task -> IO ()
@@ -77,6 +76,18 @@ runApp uri opts = do
     getStatusIcon :: Bool -> String -> String
     getStatusIcon True _ = "[x] "
     getStatusIcon False id = "[" ++ id ++ "] "
+
+-- | Get `TR.Connection` to connect to the postgrest service
+getConnection :: IO TR.Connection
+getConnection = do
+  unixSocketPath <- lookupEnv "PGRST_SERVER_UNIX_SOCKET"
+  case unixSocketPath of
+    Just path -> pure $ TR.UnixSocket path
+    Nothing -> do
+      todoUri <- lookupEnv "TODO_URI"
+      let defaultUri = "http://localhost:3000"
+      let uri = fromMaybe defaultUri todoUri
+      TR.TCP <$> mkURI (T.pack uri)
 
 optsParser :: ParserInfo Opts
 optsParser =

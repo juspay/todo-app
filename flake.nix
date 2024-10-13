@@ -19,6 +19,7 @@
           ./nix/services/postgrest.nix
           ./nix/scripts.nix
           ./nix/todo-app.nix
+          ./nix/devshell.nix
         ];
       };
     };
