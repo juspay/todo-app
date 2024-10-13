@@ -177,4 +177,3 @@ request body method paths qs conn = do
     if responseCode >= 200 && responseCode < 300
       then return $ R.responseBody r
       else error "Request failed"
-
