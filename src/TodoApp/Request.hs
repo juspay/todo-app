@@ -69,10 +69,10 @@ createUnixSocketManager socketPath = HC.newManager $ HC.defaultManagerSettings
 
 runRequest ::
   (MonadIO m, m ~ IO) =>
-  Request a ->
   Connection ->
+  Request a ->
   m a
-runRequest req conn = case req of
+runRequest conn = \case
   Complete id -> complete id conn
   ViewAll -> viewAll conn
   View -> view conn

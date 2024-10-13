@@ -39,22 +39,22 @@ runApp :: TR.Connection -> Opts -> IO ()
 runApp conn opts = do
   case optCommand opts of
     Add task -> do
-      TR.runRequest (TR.Add task) conn
+      TR.runRequest conn (TR.Add task)
       putStrLn "Task added!"
     Delete id -> do
-      TR.runRequest (TR.Delete id) conn
+      TR.runRequest conn (TR.Delete id)
       putStrLn "Task deleted!"
     Done id -> do
-      TR.runRequest (TR.Complete id) conn
+      TR.runRequest conn (TR.Complete id)
       putStrLn "Task completed!"
     View -> do
-      todo <- TR.runRequest TR.View conn
+      todo <- TR.runRequest conn TR.View
       mapM_ printTask todo
     ViewAll -> do
-      todo <- TR.runRequest TR.ViewAll conn
+      todo <- TR.runRequest conn TR.ViewAll
       mapM_ printTask todo
     Reset -> do
-      TR.runRequest TR.Reset conn
+      TR.runRequest conn TR.Reset
       putStrLn "Tasks cleared!"
   where
     printTask :: TR.Task -> IO ()
