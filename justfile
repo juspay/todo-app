@@ -2,7 +2,7 @@
 default:
     @just --list
 
-# Run external services
+# Run external services (postgres and postgrest)
 services:
     nix run .#todo-app-services
 
