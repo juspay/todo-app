@@ -85,7 +85,9 @@ getConnection = do
     Just path -> pure $ TR.UnixSocket path
     Nothing -> do
       todoUri <- lookupEnv "TODO_URI"
-      let defaultUri = "http://localhost:3000"
+      postgrestHost <- lookupEnv "PGRST_SERVER_HOST"
+      postgrestPort <- lookupEnv "PGRST_SERVER_PORT"
+      let defaultUri = "http://" <> fromMaybe "localhost" postgrestHost <> ":" <> fromMaybe "3000" postgrestPort
       let uri = fromMaybe defaultUri todoUri
       TR.TCP <$> mkURI (T.pack uri)
 
