@@ -70,7 +70,7 @@ complete :: Int -> URI -> IO ()
 complete id host = do
   let payload =
         object ["done" .= ("true" :: String)]
-  q <- QueryParam <$> mkQueryKey "id" <*> mkQueryValue (pack $ show id)
+  q <- QueryParam <$> mkQueryKey "id" <*> mkQueryValue ("eq." <> pack (show id))
   path <- traverse mkPathPiece ["todos"]
   void $ request (R.ReqBodyJson payload) R.PATCH path [q] host
 
@@ -107,7 +107,7 @@ add task host = do
 delete :: Int -> URI -> IO ()
 delete id host = do
   path <- traverse mkPathPiece ["todos"]
-  q <- QueryParam <$> mkQueryKey "id" <*> mkQueryValue (pack $ show id)
+  q <- QueryParam <$> mkQueryKey "id" <*> mkQueryValue ("eq." <> pack (show id))
   void $ request R.NoReqBody R.DELETE path [q] host
 
 -- | Remove all the TODO items from the table
