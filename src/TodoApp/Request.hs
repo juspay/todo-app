@@ -149,23 +149,13 @@ request ::
   Connection ->
   IO ByteString
 request body method paths qs conn = do
-  manager <- case conn of
-        TCP _ -> pure R.defaultHttpConfig
-        UnixSocket socketPath -> do
-          socketManager <- createUnixSocketManager socketPath
-          pure $ R.defaultHttpConfig { R.httpConfigAltManager = Just socketManager }
-  R.runReq manager $ do
-    let uri = case conn of
-          TCP u -> u
-          -- Even though the connection is over unix socket, `req` expects a URL-like string,
-          -- so we use a dummy hostname.
-          UnixSocket _ -> fromJust $ mkURI "http://localhost"
-
-    let uri' =
-          uri
-            & uriQuery .~ qs
-            & uriPath .~ paths
-    let (url, options) = fromJust $ R.useHttpURI uri'
+  httpConfig <- getHttpConfig conn
+  R.runReq httpConfig $ do
+    let uri = 
+          getURI conn
+          & uriQuery .~ qs
+          & uriPath .~ paths
+    let (url, options) = fromJust $ R.useHttpURI uri
     r <-
       R.req
         method
@@ -177,3 +167,17 @@ request body method paths qs conn = do
     if responseCode >= 200 && responseCode < 300
       then return $ R.responseBody r
       else error "Request failed"
+
+-- | Get the HTTP config given `Connection`
+getHttpConfig :: Connection -> IO R.HttpConfig
+getHttpConfig (TCP _) = pure R.defaultHttpConfig
+getHttpConfig (UnixSocket socketPath) = do
+    socketManager <- createUnixSocketManager socketPath
+    pure $ R.defaultHttpConfig { R.httpConfigAltManager = Just socketManager }
+
+-- | Get the URI of the postgrest service given `Connection`
+getURI :: Connection -> URI
+getURI (TCP u) = u
+-- Even though the connection is over unix socket, `req` expects a URL-like string,
+-- so we use a dummy hostname.
+getURI (UnixSocket _) = fromJust $ mkURI "http://localhost"
