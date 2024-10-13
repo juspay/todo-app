@@ -4,6 +4,7 @@
     inputsFrom = [
       config.haskellProjects.default.outputs.devShell
     ];
-    PGRST_SERVER_UNIX_SOCKET = config.services.postgrest.config.server-unix-socket;
+    PGRST_SERVER_UNIX_SOCKET = with config.process-compose.services.services;
+      postgrest.config.server-unix-socket;
   };
 }

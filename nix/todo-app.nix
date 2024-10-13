@@ -12,22 +12,19 @@
     default = self'.packages.todo-app;
   };
 
-  services = {
-    postgres.enable = true;
-    postgrest.enable = true;
-  };
-  scripts."createdb" = {
-    packages = [ pkgs.postgresql ];
-    text =
-      ''
-        # Create a database of your current user
-        if ! psql -h "$PWD"/data -lqt | cut -d \| -f 1 | grep -qw "$(whoami)"; then
-          createdb -h "$PWD"/data "$(whoami)"
-        fi
 
-        # Load DB dump
-        # TODO: check if schema already exists
-        psql -h "$PWD"/data < db.sql
-      '';
-  };
+  # scripts."createdb" = {
+  #   packages = [ pkgs.postgresql ];
+  #   text =
+  #     ''
+  #       # Create a database of your current user
+  #       if ! psql -h "$PWD"/data -lqt | cut -d \| -f 1 | grep -qw "$(whoami)"; then
+  #         createdb -h "$PWD"/data "$(whoami)"
+  #       fi
+
+  #       # Load DB dump
+  #       # TODO: check if schema already exists
+  #       psql -h "$PWD"/data < db.sql
+  #     '';
+  # };
 }

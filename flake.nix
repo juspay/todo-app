@@ -3,6 +3,13 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     haskell-flake.url = "github:srid/haskell-flake";
+
+    # `process-compose` from `nixpkgs` is not compatible with latest `process-compose-flake`
+    # FIXME: Use `process-compose` from nixpkgs after https://github.com/juspay/todo-app/issues/12
+    nixpkgs-latest.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
+    process-compose-flake.url = "github:Platonic-Systems/process-compose-flake";
+    services-flake.url = "github:juspay/services-flake";
   };
 
   outputs = inputs:
@@ -12,15 +19,29 @@
       imports = [
         # This is where we import the haskell-flake module. See ./nix/todo-app.nix for how we use it.
         inputs.haskell-flake.flakeModule
+        # See ./nix/services/default.nix for how we use it in `perSystem`
+        inputs.process-compose-flake.flakeModule
       ];
-      perSystem = { self', pkgs, ... }: {
+      perSystem = { inputs', self', pkgs, system, ... }: {
+        _module.args.pkgs = import inputs.nixpkgs {
+          inherit system;
+          overlays = [
+            (_: _: {
+              inherit (inputs'.nixpkgs-latest.legacyPackages) process-compose;
+            })
+          ];
+        };
         imports = [
-          ./nix/services/postgres.nix
-          ./nix/services/postgrest.nix
-          ./nix/scripts.nix
           ./nix/todo-app.nix
           ./nix/devshell.nix
+          ./nix/integration-test.nix
         ];
+        process-compose.services = {
+          imports = [
+            inputs.services-flake.processComposeModules.default
+            ./nix/services
+          ];
+        };
       };
     };
 }
