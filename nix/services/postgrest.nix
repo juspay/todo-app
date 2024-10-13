@@ -1,3 +1,5 @@
+# Custom service (not provided by `services-flake`) configuration for `postgrest`.
+# See https://community.flake.parts/services-flake/custom-service
 { pkgs, lib, config, ... }:
 {
   options = {
