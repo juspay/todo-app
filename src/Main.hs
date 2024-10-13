@@ -25,14 +25,15 @@ data Command
 
 main :: IO ()
 main = do
-  -- URI of the postgrest service
-  uri <- mkURI . T.pack . fromMaybe "http://localhost:3000" =<< lookupEnv "TODO_URI"
-  -- Connection type
-  connType <- maybe TR.TCP TR.UnixSocket <$> lookupEnv "PGRST_SERVER_UNIX_SOCKET"
+  -- Connection to the postgrest service
+  conn <- maybe
+    (TR.TCP <$> (mkURI . T.pack . fromMaybe "http://localhost:3000" =<< lookupEnv "TODO_URI"))
+    (pure . TR.UnixSocket)
+    =<< lookupEnv "PGRST_SERVER_UNIX_SOCKET"
   -- CLI options
   opts <- execParser optsParser
   -- Run the app
-  runApp (TR.Connection uri connType) opts
+  runApp conn opts
 
 runApp :: TR.Connection -> Opts -> IO ()
 runApp conn opts = do

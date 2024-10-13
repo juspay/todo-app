@@ -9,7 +9,6 @@ module TodoApp.Request
     Request (..),
     runRequest,
     Connection (..),
-    ConnectionType (..)
   )
 where
 
@@ -56,15 +55,9 @@ data Request r where
   -- | Remove all tasks
   Reset :: Request ()
 
-
-data ConnectionType
-  = TCP
+data Connection
+  = TCP URI
   | UnixSocket FilePath
-
-data Connection = Connection {
-  uri :: URI,
-  connectionType :: ConnectionType
-}
 
 createUnixSocketManager :: FilePath -> IO HC.Manager
 createUnixSocketManager socketPath = HC.newManager $ HC.defaultManagerSettings
@@ -156,14 +149,20 @@ request ::
   Connection ->
   IO ByteString
 request body method paths qs conn = do
-  manager <- case connectionType conn of
-        TCP -> pure R.defaultHttpConfig
+  manager <- case conn of
+        TCP _ -> pure R.defaultHttpConfig
         UnixSocket socketPath -> do
           socketManager <- createUnixSocketManager socketPath
           pure $ R.defaultHttpConfig { R.httpConfigAltManager = Just socketManager }
   R.runReq manager $ do
+    let uri = case conn of
+          TCP u -> u
+          -- Even though the connection is over unix socket, `req` expects a URL-like string,
+          -- so we use a dummy hostname.
+          UnixSocket _ -> fromJust $ mkURI "http://localhost"
+
     let uri' =
-          uri conn
+          uri
             & uriQuery .~ qs
             & uriPath .~ paths
     let (url, options) = fromJust $ R.useHttpURI uri'
