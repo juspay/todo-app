@@ -19,9 +19,10 @@
       imports = [
         # This is where we import the haskell-flake module. See ./nix/todo-app.nix for how we use it.
         inputs.haskell-flake.flakeModule
-        # See ./nix/process-compose.nix for how we use it.
+        # See ./nix/{todo-app-services,integration-test}.nix for how we use it.
         inputs.process-compose-flake.flakeModule
-        ./nix/process-compose.nix
+        ./nix/todo-app-services.nix
+        ./nix/integration-test.nix
         # This is where we override `nixpkgs` to use `process-compose` from `nixpkgs-latest`.
         ./nix/nixpkgs.nix
       ];
@@ -29,7 +30,6 @@
         imports = [
           ./nix/todo-app.nix
           ./nix/devshell.nix
-          ./nix/integration-test.nix
         ];
       };
     };
