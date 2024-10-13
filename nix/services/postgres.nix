@@ -27,7 +27,9 @@
                 # Initialize a database with data stored in current project dir
                 [ ! -d "./data/db" ] && initdb --no-locale -D ./data/db
 
-                postgres -D ./data/db -k "$PWD"/data
+                # Start postgres using Unix socket and disable listening on TCP port.
+                # Listening on TCP port is disabled by setting `listen_addresses` to empty string.
+                postgres -D ./data/db -k "$PWD"/data -c listen_addresses=""
               '';
           };
         in

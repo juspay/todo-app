@@ -6,6 +6,7 @@
     #
     # For customization, see
     # https://github.com/srid/haskell-flake
+    autoWire = [ "packages" ];
   };
   packages = {
     default = self'.packages.todo-app;

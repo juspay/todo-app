@@ -27,31 +27,33 @@ main :: IO ()
 main = do
   -- URI of the postgrest service
   uri <- mkURI . T.pack . fromMaybe "http://localhost:3000" =<< lookupEnv "TODO_URI"
+  -- Connection type
+  connType <- maybe TR.TCP TR.UnixSocket <$> lookupEnv "PGRST_SERVER_UNIX_SOCKET"
   -- CLI options
   opts <- execParser optsParser
   -- Run the app
-  runApp uri opts
+  runApp (TR.Connection uri connType) opts
 
-runApp :: URI -> Opts -> IO ()
-runApp uri opts = do
+runApp :: TR.Connection -> Opts -> IO ()
+runApp conn opts = do
   case optCommand opts of
     Add task -> do
-      TR.runRequest (TR.Add task) uri
+      TR.runRequest (TR.Add task) conn
       putStrLn "Task added!"
     Delete id -> do
-      TR.runRequest (TR.Delete id) uri
+      TR.runRequest (TR.Delete id) conn
       putStrLn "Task deleted!"
     Done id -> do
-      TR.runRequest (TR.Complete id) uri
+      TR.runRequest (TR.Complete id) conn
       putStrLn "Task completed!"
     View -> do
-      todo <- TR.runRequest TR.View uri
+      todo <- TR.runRequest TR.View conn
       mapM_ printTask todo
     ViewAll -> do
-      todo <- TR.runRequest TR.ViewAll uri
+      todo <- TR.runRequest TR.ViewAll conn
       mapM_ printTask todo
     Reset -> do
-      TR.runRequest TR.Reset uri
+      TR.runRequest TR.Reset conn
       putStrLn "Tasks cleared!"
   where
     printTask :: TR.Task -> IO ()
