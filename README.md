@@ -2,7 +2,7 @@
 
 A simple TODO app in Haskell using [PostgREST](https://postgrest.org/) as a RESTful API for [PostgreSQL](https://www.postgresql.org/).
 
-> [!INFO]
+> [!NOTE]
 > This app serves as a hello-world to ultimately demonstrate how a Haskell project can benefit from the use of Nix (to be precise, [haskell-flake] and [flake-parts]).
 
 [haskell-flake]: https://community.flake.parts/haskell-flake
