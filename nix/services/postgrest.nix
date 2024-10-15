@@ -40,6 +40,7 @@
           '';
       };
       readiness_probe = {
+        # `http://localhost` is to tell curl to use the HTTP protocol and `localhost` is just a dummy hostname
         exec.command = "${lib.getExe pkgs.curl} --unix-socket ${config.services.postgrest.config.server-unix-socket} http://localhost";
       };
     };
