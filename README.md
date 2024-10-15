@@ -40,6 +40,6 @@ just watch
 ## Run through Nix
 
 ```sh
-nix run github:juspay/todo-app#todo-app-services
+nix run github:juspay/todo-app#todo-app-services-tcp
 nix run github:juspay/todo-app -- view
 ```
