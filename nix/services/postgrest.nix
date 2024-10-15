@@ -22,21 +22,21 @@
   };
   config = lib.mkIf config.services.postgrest.enable {
     settings.processes.postgrest = {
+      environment = {
+        PGRST_DB_SCHEMAS = config.services.postgrest.config.db-schemas;
+        PGRST_DB_ANON_ROLE = config.services.postgrest.config.db-anon-role;
+        PGRST_SERVER_UNIX_SOCKET = config.services.postgrest.config.server-unix-socket;
+      };
       command = pkgs.writeShellApplication {
         name = "pg_rest";
         runtimeInputs = [ pkgs.haskellPackages.postgrest ];
         text =
           ''
+            # Can't be set in `settings.processes.postgrest.environment` because the value has to be evaluated in the shell
             PGRST_DB_URI="${config.services.postgrest.config.db-uri}";
-            PGRST_DB_SCHEMAS="${config.services.postgrest.config.db-schemas}";
-            PGRST_DB_ANON_ROLE="${config.services.postgrest.config.db-anon-role}";
-            PGRST_SERVER_UNIX_SOCKET="${config.services.postgrest.config.server-unix-socket}";
             # Have to export explicitly: https://www.shellcheck.net/wiki/SC2155
             export PGRST_DB_URI;
-            export PGRST_DB_SCHEMAS;
-            export PGRST_DB_ANON_ROLE;
-            export PGRST_SERVER_UNIX_SOCKET;
-            postgrest
+            exec postgrest
           '';
       };
       readiness_probe = {
