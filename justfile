@@ -10,6 +10,7 @@ alias s := services
 
 # Watch and recompile on changes
 watch:
-    ghciwatch
+    # Executes the main subcommand with the `view` argument after recompiling
+    ghciwatch --test-ghci ":main view"
 
 alias w := watch
