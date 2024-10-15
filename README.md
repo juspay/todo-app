@@ -36,7 +36,7 @@ just services
 cabal run todo-app -- <args>
 ```
 
-## Run
+## Run through Nix
 
 - Run external services `nix run github:juspay/todo-app#todo-app-services`
 - View pending tasks: `nix run github:juspay/todo-app -- view` (*Note: run the command in the same directory where external services are running*)
