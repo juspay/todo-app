@@ -3,9 +3,10 @@
 A simple TODO app in Haskell using [PostgREST](https://postgrest.org/) as a RESTful API for [PostgreSQL](https://www.postgresql.org/).
 
 > [!NOTE]
-> This app serves as a hello-world to ultimately demonstrate how a Haskell project can benefit from the use of Nix (to be precise, [haskell-flake] and [flake-parts]).
+> This app is a demo to showcase how developer experience in a Haskell project can be improved using Nix. We primarily use [haskell-flake], [services-flake] and [flake-parts] to achieve this.
 
 [haskell-flake]: https://community.flake.parts/haskell-flake
+[services-flake]: https://community.flake.parts/services-flake
 [flake-parts]: https://flake.parts
 
 ## Tutorial
