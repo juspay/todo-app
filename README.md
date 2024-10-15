@@ -15,17 +15,28 @@ Learn with [our blog post series](https://nixos.asia/en/nixify-haskell):
 - [Introduction](https://nixos.asia/en/nixify-haskell-nixpkgs)
 - [Switch to flake-parts](https://nixos.asia/en/nixify-haskell-parts)
 - [Simplify Nix using haskell-flake](https://nixos.asia/en/nixify-haskell-flake)
+- [Integrate external services using services-flake](https://nixos.asia/en/nixify-services-flake)
 - ...
-
-## Prerequisite
-
-- [Install Nix](https://nixos.asia/en/install)
-- Run application services
-  - Run `nix run .#postgres` to start a postgres server with data dir in `./data/db`.
-    - Run (once) `nix run .#createdb` to create DB user, load the dump and create the DB configuration for PostgREST.
-  - Run `nix run .#postgrest` to start PostgREST web server.
 
 ## Getting Started
 
-- Run `nix build` that will symlink the executable at `./result/bin/todo-app`.
-- Run `./result/bin/todo-app --help` to see the list of actions you can perform.
+[Install Nix](https://nixos.asia/en/install)
+
+## Development
+
+```sh
+nix develop
+```
+To enter development shell on `cd`, use [direnv](https://nixos.asia/en/direnv)
+
+```sh
+# Start postgres and postgrest
+just services
+# Make the Haskell code change and run
+cabal run todo-app -- <args>
+```
+
+## Run through Nix
+
+- Run external services `nix run github:juspay/todo-app#todo-app-services`
+- View pending tasks: `nix run github:juspay/todo-app -- view` (*Note: run the command in the same directory where external services are running*)
