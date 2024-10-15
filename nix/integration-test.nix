@@ -13,7 +13,7 @@
       settings.processes.test = {
         environment = {
           # If not set, `todo-app` will try to connect to `postgrest` using TCP.
-          PGRST_SERVER_UNIX_SOCKET = config.services.postgrest.config.server-unix-socket;
+          PGRST_SERVER_UNIX_SOCKET = config.services.postgrest.unixSocket;
         };
         command = pkgs.writeShellApplication {
           name = "todo-app-integration-test";

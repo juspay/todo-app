@@ -1,12 +1,21 @@
 # Custom service (not provided by `services-flake`) configuration for `postgrest`.
 # See https://community.flake.parts/services-flake/custom-service
 { pkgs, lib, config, ... }:
+let
+  inherit (lib) types;
+in
 {
   options = {
     services.postgrest = {
       enable = lib.mkEnableOption "postgrest";
+      unixSocket = lib.mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "The path to the socket to bind to";
+        example = "/tmp/pgrst.sock";
+      };
       config = lib.mkOption {
-        type = lib.types.attrsOf lib.types.str;
+        type = types.attrsOf types.str;
         # TODO: use https://github.com/srid/flake-root for `db-uri` and `server-unix-socket`
         default = {
           # Note: socket path in connection uri cannot contain `/`, so we need to URL-encode it.
@@ -15,7 +24,6 @@
           db-uri = "postgres://\${PWD//\//%2F}%2Fdata%2Fpg/todo";
           db-schemas = "api";
           db-anon-role = "todo_user";
-          server-unix-socket = "./data/pgrst.sock";
         };
       };
     };
@@ -25,7 +33,8 @@
       environment = {
         PGRST_DB_SCHEMAS = config.services.postgrest.config.db-schemas;
         PGRST_DB_ANON_ROLE = config.services.postgrest.config.db-anon-role;
-        PGRST_SERVER_UNIX_SOCKET = config.services.postgrest.config.server-unix-socket;
+      } // lib.optionalAttrs (config.services.postgrest.unixSocket != null) {
+        PGRST_SERVER_UNIX_SOCKET = config.services.postgrest.unixSocket;
       };
       command = pkgs.writeShellApplication {
         name = "pg_rest";
@@ -41,7 +50,11 @@
       };
       readiness_probe = {
         # `http://localhost` is to tell curl to use the HTTP protocol and `localhost` is just a dummy hostname
-        exec.command = "${lib.getExe pkgs.curl} --unix-socket ${config.services.postgrest.config.server-unix-socket} http://localhost";
+        exec.command = if config.services.postgrest.unixSocket != null then
+          "${lib.getExe pkgs.curl} --unix-socket ${config.services.postgrest.unixSocket} http://localhost"
+        else
+          # TODO: configurable hostname and port
+          "${lib.getExe pkgs.curl} http://localhost:3000";
       };
     };
   };
