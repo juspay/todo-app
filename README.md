@@ -31,7 +31,7 @@ To enter development shell on `cd`, use [direnv](https://nixos.asia/en/direnv)
 
 ```sh
 # Start postgres and postgrest
-just s
+just services
 # Make the Haskell code change and run
 cabal run todo-app -- <args>
 ```

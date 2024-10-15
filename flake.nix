@@ -5,7 +5,7 @@
     haskell-flake.url = "github:srid/haskell-flake";
 
     # `process-compose` from `nixpkgs` is not compatible with latest `process-compose-flake`
-    # FIXME: Use `process-compose` from nixpkgs after https://github.com/juspay/todo-app/issues/12
+    # FIXME: Use `nixpkgs` after https://github.com/juspay/todo-app/issues/12
     nixpkgs-latest.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     process-compose-flake.url = "github:Platonic-Systems/process-compose-flake";
@@ -23,7 +23,7 @@
         inputs.process-compose-flake.flakeModule
         ./nix/todo-app-services.nix
         ./nix/integration-test.nix
-        # This is where we override `nixpkgs` to use `process-compose` from `nixpkgs-latest`.
+        # This is where we override `nixpkgs` to use `process-compose` and `ghciwatch` from `nixpkgs-latest`.
         ./nix/nixpkgs.nix
       ];
       perSystem = { self', pkgs, ... }: {

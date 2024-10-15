@@ -10,6 +10,6 @@ alias s := services
 
 # Watch and recompile on changes
 watch:
-    ghcid -c cabal repl
+    ghciwatch
 
 alias w := watch

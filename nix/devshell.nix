@@ -6,8 +6,9 @@
     ];
     PGRST_SERVER_UNIX_SOCKET = with config.process-compose.todo-app-services.services;
       postgrest.config.server-unix-socket;
-    packages = [
-      pkgs.just
+    packages = with pkgs; [
+      just
+      ghciwatch
     ];
     shellHook = ''
       echo

@@ -5,7 +5,7 @@
       inherit system;
       overlays = [
         (_: _: {
-          inherit (inputs'.nixpkgs-latest.legacyPackages) process-compose;
+          inherit (inputs'.nixpkgs-latest.legacyPackages) process-compose ghciwatch;
         })
       ];
     };
