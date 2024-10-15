@@ -1,11 +1,12 @@
 # todo-app
 
-A simple TODO app in Haskell that provides a persistent way to manage the TODO list, by making HTTP requests to Postgrest (postgrest is a web server that converts your PostgreSQL database into a RESTful API).
+A simple TODO app in Haskell using [PostgREST](https://postgrest.org/) as a RESTful API for [PostgreSQL](https://www.postgresql.org/).
 
-
-**This app serves as a hello-world to ultimately demonstrate how a Haskell project can benefit from the use of Nix (to be precise, [haskell-flake] and [flake-parts]).**
+> [!NOTE]
+> This app is a demo to showcase how developer experience in a Haskell project can be improved using Nix. We primarily use [haskell-flake], [services-flake] and [flake-parts] to achieve this.
 
 [haskell-flake]: https://community.flake.parts/haskell-flake
+[services-flake]: https://community.flake.parts/services-flake
 [flake-parts]: https://flake.parts
 
 ## Tutorial
@@ -32,11 +33,13 @@ To enter development shell on `cd`, use [direnv](https://nixos.asia/en/direnv)
 ```sh
 # Start postgres and postgrest
 just services
-# Make the Haskell code change and run
-cabal run todo-app -- <args>
+# Watch for changes in the Haskell code
+just watch
 ```
 
 ## Run through Nix
 
-- Run external services `nix run github:juspay/todo-app#todo-app-services`
-- View pending tasks: `nix run github:juspay/todo-app -- view` (*Note: run the command in the same directory where external services are running*)
+```sh
+nix run github:juspay/todo-app#todo-app-services
+nix run github:juspay/todo-app -- view
+```
