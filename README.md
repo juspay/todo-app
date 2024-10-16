@@ -30,8 +30,10 @@ nix develop
 ```
 To enter development shell on `cd`, use [direnv](https://nixos.asia/en/direnv)
 
+> [!NOTE]
+> `just services` starts postgres and postgrest, both of which bind to Unix socket.
+
 ```sh
-# Start postgres and postgrest
 just services
 # Watch for changes in the Haskell code
 just watch
@@ -39,7 +41,10 @@ just watch
 
 ## Run through Nix
 
+> [!NOTE]
+> `todo-app-services-tcp` starts postgres, which listens on Unix socket, while postgrest listens on TCP port 3000.
+
 ```sh
-nix run github:juspay/todo-app#todo-app-services
+nix run github:juspay/todo-app#todo-app-services-tcp
 nix run github:juspay/todo-app -- view
 ```

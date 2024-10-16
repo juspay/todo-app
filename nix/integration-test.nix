@@ -7,13 +7,14 @@
         inputs.services-flake.processComposeModules.default
         ./services
       ];
+      services.postgrest.unixSocket = "./data/pgrst.sock";
       # `test` is a reserved name in `process-compose-flake`.
       # This process is disabled by default and is only enabled when `nix flake check` is run,
       # which is only done in CI.
       settings.processes.test = {
         environment = {
           # If not set, `todo-app` will try to connect to `postgrest` using TCP.
-          PGRST_SERVER_UNIX_SOCKET = config.services.postgrest.config.server-unix-socket;
+          PGRST_SERVER_UNIX_SOCKET = config.services.postgrest.unixSocket;
         };
         command = pkgs.writeShellApplication {
           name = "todo-app-integration-test";
