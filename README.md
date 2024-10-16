@@ -34,7 +34,6 @@ To enter development shell on `cd`, use [direnv](https://nixos.asia/en/direnv)
 > `just services` starts postgres and postgrest, both of which bind to Unix socket.
 
 ```sh
-# Start postgres and postgrest
 just services
 # Watch for changes in the Haskell code
 just watch
