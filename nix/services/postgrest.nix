@@ -51,7 +51,7 @@ in
       readiness_probe = {
         # `http://localhost` is to tell curl to use the HTTP protocol and `localhost` is just a dummy hostname
         exec.command = if config.services.postgrest.unixSocket != null then
-          "${lib.getExe pkgs.curl} --unix-socket ${config.services.postgrest.unixSocket} http://localhost"
+          "${lib.getExe' pkgs.curl "curl"} --unix-socket ${config.services.postgrest.unixSocket} http://localhost"
         else
           # TODO: configurable hostname and port
           "${lib.getExe pkgs.curl} http://localhost:3000";
